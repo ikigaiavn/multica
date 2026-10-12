@@ -77,10 +77,14 @@ Changes take effect after restarting the backend / compose stack. The web UI rea
 | `ALLOWED_EMAIL_DOMAINS` | Optional comma-separated allowlist of email domains |
 | `ALLOWED_EMAILS` | Optional comma-separated allowlist of exact email addresses |
 | `DISABLE_WORKSPACE_CREATION` | Set to `true` to make `POST /api/workspaces` return 403 for every caller — users can only join workspaces they were invited to |
+| `DEFAULT_WORKSPACE_SLUG` | Every user who signs in joins this workspace (as `member`, or with a pending invitation's role). The first user to sign in creates it and becomes its owner |
+| `DEFAULT_WORKSPACE_NAME` | Display name used when the default workspace is created (defaults to the slug) |
 
 Changes take effect after restarting the backend / compose stack. The web UI reads `ALLOW_SIGNUP` and `DISABLE_WORKSPACE_CREATION` from `/api/config` at runtime, so no web rebuild is needed.
 
 #### Locking down workspace creation
+
+**Internal company deployment:** set `DEFAULT_WORKSPACE_SLUG=acme`, `ALLOWED_EMAIL_DOMAINS=acme.com`, `ALLOW_SIGNUP=false` and `DISABLE_WORKSPACE_CREATION=true`. Anyone with a company Google account signs in straight into the shared workspace; the first person to sign in owns it.
 
 `ALLOW_SIGNUP=false` restricts new accounts to allowlisted or invited users, but it does **not** block an already-signed-in user from creating another workspace via `POST /api/workspaces`. On a self-hosted instance where every issue/repo/agent must be visible to the platform admin, set `DISABLE_WORKSPACE_CREATION=true` to close that gap. The recommended bootstrap sequence is:
 

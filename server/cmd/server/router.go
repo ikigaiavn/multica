@@ -428,6 +428,10 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		AllowedEmails:            splitAndTrim(os.Getenv("ALLOWED_EMAILS")),
 		AllowedEmailDomains:      splitAndTrim(os.Getenv("ALLOWED_EMAIL_DOMAINS")),
 		DisableWorkspaceCreation: os.Getenv("DISABLE_WORKSPACE_CREATION") == "true",
+		DefaultWorkspace: handler.DefaultWorkspaceConfig{
+			Slug: strings.ToLower(strings.TrimSpace(os.Getenv("DEFAULT_WORKSPACE_SLUG"))),
+			Name: strings.TrimSpace(os.Getenv("DEFAULT_WORKSPACE_NAME")),
+		},
 		VCSIntegrationEnabled:    os.Getenv("MULTICA_VCS_INTEGRATION_ENABLED") == "true",
 		PublicURL:                strings.TrimRight(strings.TrimSpace(os.Getenv("MULTICA_PUBLIC_URL")), "/"),
 		AppURL:                   appURLFromEnv(),

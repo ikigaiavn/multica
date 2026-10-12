@@ -345,6 +345,12 @@ func main() {
 	if os.Getenv("RESEND_API_KEY") == "" && strings.TrimSpace(os.Getenv("SMTP_HOST")) == "" {
 		slog.Warn("no email backend configured (RESEND_API_KEY and SMTP_HOST both empty) — verification codes will be printed to the log instead of emailed.")
 	}
+	if slug := strings.ToLower(strings.TrimSpace(os.Getenv("DEFAULT_WORKSPACE_SLUG"))); slug != "" {
+		if err := handler.ValidateDefaultWorkspaceSlug(slug); err != nil {
+			slog.Error("refusing to start: " + err.Error())
+			os.Exit(1)
+		}
+	}
 	if os.Getenv("GOOGLE_CLIENT_ID") == "" || os.Getenv("GOOGLE_CLIENT_SECRET") == "" {
 		slog.Warn("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set — Google is the only login method, so nobody can sign in.")
 	}
