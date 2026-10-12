@@ -4,9 +4,9 @@ import { createTestApi, loginAsDefault, openWorkspaceMenu, waitForPageText } fro
 test.describe("Authentication", () => {
   test("login page renders correctly", async ({ page }) => {
     await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await waitForPageText(page, "Sign in to Multica");
+    await waitForPageText(page, "Sign in to ikigaia");
 
-    await expect(page.getByText("Sign in to Multica")).toBeVisible();
+    await expect(page.getByText("Sign in to ikigaia")).toBeVisible();
     // Google is the only sign-in method: no email form, and either the Google
     // button or the operator notice when the server has no Google client.
     await expect(page.getByRole("textbox")).toHaveCount(0);
@@ -33,7 +33,7 @@ test.describe("Authentication", () => {
 
     await page.goto(`/${workspace.slug}/issues`, { waitUntil: "domcontentloaded" });
     await page.waitForURL("**/login", { timeout: 10000, waitUntil: "domcontentloaded" });
-    await waitForPageText(page, "Sign in to Multica");
+    await waitForPageText(page, "Sign in to ikigaia");
   });
 
   test("logout redirects to /login", async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe("Authentication", () => {
     await page.getByRole("menuitem", { name: "Log out" }).click();
 
     await page.waitForURL("**/login", { timeout: 10000, waitUntil: "domcontentloaded" });
-    await waitForPageText(page, "Sign in to Multica");
+    await waitForPageText(page, "Sign in to ikigaia");
     await expect(page).toHaveURL(/\/login/);
   });
 });

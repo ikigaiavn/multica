@@ -104,7 +104,7 @@ describe("LoginPage", () => {
 
   it("offers Google as the only way to sign in", () => {
     renderWithI18n(<LoginPage google={google} />);
-    expect(screen.getByText(/sign in to multica/i)).toBeInTheDocument();
+    expect(screen.getByText(enAuth.signin.title)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /continue with google/i }),
     ).toBeInTheDocument();
@@ -276,7 +276,7 @@ describe("LoginPage", () => {
     );
 
     expect(
-      screen.getByText(/sign in to multica/i),
+      screen.getByText(enAuth.signin.title),
     ).toBeInTheDocument();
   });
 

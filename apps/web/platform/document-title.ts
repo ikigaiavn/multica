@@ -13,10 +13,10 @@
  */
 
 /** Root fallback — the title of a page that has nothing more specific to say. */
-export const SITE_TITLE = "Multica";
+export const SITE_TITLE = "ikigaia";
 
 /** Appended to every page-specific title. */
-export const TITLE_SUFFIX = " | Multica";
+export const TITLE_SUFFIX = " | ikigaia";
 
 /** Next.js `metadata.title.template`; see apps/web/app/layout.tsx. */
 export const TITLE_TEMPLATE = `%s${TITLE_SUFFIX}`;
