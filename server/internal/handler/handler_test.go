@@ -42,6 +42,9 @@ const (
 )
 
 func TestMain(m *testing.M) {
+	// Email code login is closed unless a dev code is configured; the suites
+	// below drive it as their login fixture.
+	os.Setenv("MULTICA_DEV_VERIFICATION_CODE", "888888")
 	ctx := context.Background()
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -2298,7 +2301,7 @@ func createVerificationCodeForTest(t *testing.T, email, code string) {
 	}
 }
 
-func TestVerifyCodeRejectsDevCodeUnlessExplicitlyConfigured(t *testing.T) {
+func TestVerifyCodeDisabledWithoutDevCode(t *testing.T) {
 	t.Setenv(devVerificationCodeEnv, "")
 	t.Setenv("APP_ENV", "")
 
@@ -2317,9 +2320,7 @@ func TestVerifyCodeRejectsDevCodeUnlessExplicitlyConfigured(t *testing.T) {
 	req := httptest.NewRequest("POST", "/auth/verify-code", &buf)
 	req.Header.Set("Content-Type", "application/json")
 	testHandler.VerifyCode(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("VerifyCode (disabled dev code): expected 400, got %d: %s", w.Code, w.Body.String())
-	}
+	assertEmailCodeLoginDisabled(t, w)
 }
 
 func TestVerifyCodeAcceptsConfiguredDevCodeOutsideProduction(t *testing.T) {
@@ -2347,7 +2348,7 @@ func TestVerifyCodeAcceptsConfiguredDevCodeOutsideProduction(t *testing.T) {
 	}
 }
 
-func TestVerifyCodeRejectsConfiguredDevCodeInProduction(t *testing.T) {
+func TestVerifyCodeDisabledInProduction(t *testing.T) {
 	t.Setenv(devVerificationCodeEnv, "888888")
 	t.Setenv("APP_ENV", "production")
 
@@ -2366,13 +2367,11 @@ func TestVerifyCodeRejectsConfiguredDevCodeInProduction(t *testing.T) {
 	req := httptest.NewRequest("POST", "/auth/verify-code", &buf)
 	req.Header.Set("Content-Type", "application/json")
 	testHandler.VerifyCode(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("VerifyCode (production dev code): expected 400, got %d: %s", w.Code, w.Body.String())
-	}
+	assertEmailCodeLoginDisabled(t, w)
 }
 
 func TestVerifyCodeWrongCode(t *testing.T) {
-	t.Setenv(devVerificationCodeEnv, "")
+	t.Setenv(devVerificationCodeEnv, "888888")
 
 	const email = "wrong-code-test@multica.ai"
 	ctx := context.Background()
@@ -2402,7 +2401,7 @@ func TestVerifyCodeWrongCode(t *testing.T) {
 }
 
 func TestVerifyCodeBruteForceProtection(t *testing.T) {
-	t.Setenv(devVerificationCodeEnv, "")
+	t.Setenv(devVerificationCodeEnv, "888888")
 
 	const email = "bruteforce-test@multica.ai"
 	ctx := context.Background()
@@ -3740,4 +3739,46 @@ func TestUpsertSkillFileRejectsSkillMd(t *testing.T) {
 	if !strings.Contains(upsertRec.Body.String(), "SKILL.md is reserved") {
 		t.Fatalf("expected error message about reserved SKILL.md, got: %s", upsertRec.Body.String())
 	}
+}
+
+func assertEmailCodeLoginDisabled(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d: %s", w.Code, w.Body.String())
+	}
+	var body struct {
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode error body: %v", err)
+	}
+	if body.Code != "email_login_disabled" {
+		t.Fatalf("expected code email_login_disabled, got %q", body.Code)
+	}
+}
+
+func TestSendCodeDisabledWithoutDevCode(t *testing.T) {
+	t.Setenv(devVerificationCodeEnv, "")
+	t.Setenv("APP_ENV", "")
+
+	w := httptest.NewRecorder()
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(map[string]string{"email": "send-code-disabled-test@multica.ai"})
+	req := httptest.NewRequest("POST", "/auth/send-code", &buf)
+	req.Header.Set("Content-Type", "application/json")
+	testHandler.SendCode(w, req)
+	assertEmailCodeLoginDisabled(t, w)
+}
+
+func TestSendCodeDisabledInProduction(t *testing.T) {
+	t.Setenv(devVerificationCodeEnv, "888888")
+	t.Setenv("APP_ENV", "production")
+
+	w := httptest.NewRecorder()
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(map[string]string{"email": "send-code-production-test@multica.ai"})
+	req := httptest.NewRequest("POST", "/auth/send-code", &buf)
+	req.Header.Set("Content-Type", "application/json")
+	testHandler.SendCode(w, req)
+	assertEmailCodeLoginDisabled(t, w)
 }

@@ -143,6 +143,21 @@ func isDevVerificationCode(code string) bool {
 	return subtle.ConstantTimeCompare([]byte(code), []byte(devCode)) == 1
 }
 
+// emailCodeLoginEnabled reports whether the email verification-code login
+// endpoints are open. Google is the only user-facing login method; the code
+// flow stays available only as a local/testing back door for automation
+// (make up, daemon profiles, E2E), which already depends on a fixed dev code.
+func emailCodeLoginEnabled() bool {
+	if isProductionEnv() {
+		return false
+	}
+	return isSixDigitCode(strings.TrimSpace(os.Getenv(devVerificationCodeEnv)))
+}
+
+func writeEmailCodeLoginDisabled(w http.ResponseWriter) {
+	writeFeatureDisabled(w, "email_login_disabled", "email code login is disabled; sign in with Google")
+}
+
 func isProductionEnv() bool {
 	return strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production")
 }
@@ -305,6 +320,11 @@ func contains(slice []string, s string) bool {
 }
 
 func (h *Handler) SendCode(w http.ResponseWriter, r *http.Request) {
+	if !emailCodeLoginEnabled() {
+		writeEmailCodeLoginDisabled(w)
+		return
+	}
+
 	var req SendCodeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -397,6 +417,11 @@ func (h *Handler) SendCode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
+	if !emailCodeLoginEnabled() {
+		writeEmailCodeLoginDisabled(w)
+		return
+	}
+
 	var req VerifyCodeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
