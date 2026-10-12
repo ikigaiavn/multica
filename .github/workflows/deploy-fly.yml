@@ -1,0 +1,92 @@
+name: Deploy (Fly)
+
+# Every push to main is verified, then deployed to https://work.ikigaia.vn.
+# Run it by hand from the Actions tab to redeploy without a new commit.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deploys at once; a newer push waits for the current one.
+concurrency:
+  group: deploy-fly
+  cancel-in-progress: false
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: multica
+          POSTGRES_USER: multica
+          POSTGRES_PASSWORD: multica
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U multica -d multica"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://multica:multica@localhost:5432/multica?sslmode=disable
+      GOFLAGS: -count=1
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "~1.26.9"
+          check-latest: true
+          cache-dependency-path: server/go.sum
+      - name: Run migrations
+        run: cd server && go run ./cmd/migrate up
+      - name: Test
+        run: bash scripts/test-go.sh --only regular
+
+  deploy:
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://work.ikigaia.vn
+    steps:
+      - uses: actions/checkout@v6
+      - uses: superfly/flyctl-actions/setup-flyctl@1.6
+      - name: Deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy . \
+            --config deploy/fly/fly.toml \
+            --dockerfile deploy/fly/Dockerfile \
+            --app ikigaia-work \
+            --remote-only \
+            --ha=false \
+            --build-arg COMMIT="${GITHUB_SHA::9}"
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS https://ikigaia-work.fly.dev/api/config > /dev/null; then
+              echo "ok"; exit 0
+            fi
+            sleep 6
+          done
+          echo "deployed app did not answer /api/config" >&2
+          exit 1

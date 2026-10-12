@@ -20,6 +20,10 @@ concurrency:
 
 jobs:
   verify:
+    # Upstream publishes images, charts and desktop builds from here. This
+    # internal fork deploys through deploy-fly.yml instead, so every job
+    # (they all depend on verify) is skipped outside the upstream repo.
+    if: github.repository == 'multica-ai/multica'
     runs-on: ubuntu-latest
     outputs:
       tag_name: ${{ steps.release_meta.outputs.tag_name }}
