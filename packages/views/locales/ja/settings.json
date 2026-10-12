@@ -60,8 +60,8 @@
     "category_labels": {
       "unstarted": "未着手",
       "started": "開始済み",
-      "done": "完了",
-      "closed": "終了"
+      "done": "クローズ",
+      "closed": "キャンセル"
     },
     "categories": {
       "unstarted": "バックログや計画済みを含む、まだ始まっていない作業。",
@@ -73,9 +73,9 @@
       "backlog": "保留。ここに移動してもエージェントは起動しません。",
       "todo": "待機中。ここに移動すると担当エージェントが起動します。",
       "in_progress": "作業中。",
-      "in_review": "納品済み、レビュー待ち。オートパイロットの実行を完了します。",
+      "in_review": "解決済み、人による確認待ち。オートパイロットの実行を完了します。",
       "blocked": "外部依存でブロック中。",
-      "done": "完了。",
+      "done": "クローズ。",
       "cancelled": "見送り。"
     },
     "pr_auto_complete_badge": "PR のマージで自動設定",

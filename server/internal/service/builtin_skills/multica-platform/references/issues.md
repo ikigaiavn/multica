@@ -208,7 +208,7 @@ on it. These are the contracts, not advice.
 The rules below name fixed built-in status keys, not category-wide behaviors.
 Custom statuses have only lifecycle semantics: unstarted, started, done
 (successful terminal), or closed (cancelled terminal). They do not inherit
-Backlog parking, In Review completion, Blocked failure, or In Progress recovery.
+Backlog parking, Resolved (`in_review`) completion, Blocked failure, or In Progress recovery.
 Use the built-in key when its special behavior is needed. Built-in definitions
 cannot be edited or archived.
 

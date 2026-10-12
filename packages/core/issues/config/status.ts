@@ -46,9 +46,9 @@ export const BUILT_IN_STATUS_LABEL: Record<BuiltInIssueStatus, string> = {
   backlog: "Backlog",
   todo: "Todo",
   in_progress: "In Progress",
-  in_review: "In Review",
+  in_review: "Resolved",
   blocked: "Blocked",
-  done: "Done",
+  done: "Closed",
   cancelled: "Cancelled",
 };
 
@@ -64,6 +64,6 @@ export const STATUS_CONFIG: Record<
 > = {
   unstarted: { label: "Unstarted", iconColor: "text-muted-foreground", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
   started: { label: "Started", iconColor: "text-warning", hoverBg: "hover:bg-warning/10", dividerColor: "bg-warning", columnBg: "bg-warning/5" },
-  done: { label: "Done", iconColor: "text-info", hoverBg: "hover:bg-info/10", dividerColor: "bg-info", columnBg: "bg-info/5" },
-  closed: { label: "Closed", iconColor: "text-muted-foreground", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
+  done: { label: "Closed", iconColor: "text-info", hoverBg: "hover:bg-info/10", dividerColor: "bg-info", columnBg: "bg-info/5" },
+  closed: { label: "Cancelled", iconColor: "text-muted-foreground", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
 };

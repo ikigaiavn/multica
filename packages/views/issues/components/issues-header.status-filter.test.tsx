@@ -104,7 +104,7 @@ async function openStatusSubmenu() {
   const statusTrigger = await screen.findByRole("menuitem", { name: /^Status/ });
   fireEvent.click(statusTrigger);
   await waitFor(() =>
-    expect(screen.getByRole("menuitemcheckbox", { name: /In Review/ })).toBeInTheDocument(),
+    expect(screen.getByRole("menuitemcheckbox", { name: /Resolved/ })).toBeInTheDocument(),
   );
 }
 
@@ -135,10 +135,10 @@ describe("IssueFilterMenu status section", () => {
       "Backlog",
       "Todo",
       "In Progress",
-      "In Review",
+      "Resolved",
       "Blocked",
       "Human Review",
-      "Done",
+      "Closed",
       "Cancelled",
     ]);
   });

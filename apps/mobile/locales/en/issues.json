@@ -18,15 +18,15 @@
     "backlog": "Backlog",
     "todo": "Todo",
     "in_progress": "In Progress",
-    "in_review": "In Review",
-    "done": "Done",
+    "in_review": "Resolved",
+    "done": "Closed",
     "blocked": "Blocked"
   },
   "category": {
     "unstarted": "Unstarted",
     "started": "Started",
-    "done": "Done",
-    "closed": "Closed"
+    "done": "Closed",
+    "closed": "Cancelled"
   },
   "priority": {
     "none": "No priority",

@@ -60,8 +60,8 @@
     "category_labels": {
       "unstarted": "시작 전",
       "started": "시작됨",
-      "done": "완료",
-      "closed": "종료"
+      "done": "종료",
+      "closed": "취소됨"
     },
     "categories": {
       "unstarted": "백로그와 계획된 작업을 포함하여 아직 시작하지 않은 작업입니다.",
@@ -73,9 +73,9 @@
       "backlog": "보류. 여기로 옮겨도 에이전트가 시작되지 않습니다.",
       "todo": "대기 중. 여기로 옮기면 담당 에이전트가 시작됩니다.",
       "in_progress": "진행 중.",
-      "in_review": "전달 완료, 리뷰 대기. 오토파일럿 실행을 마무리합니다.",
+      "in_review": "해결됨, 사람의 확인 대기. 오토파일럿 실행을 마무리합니다.",
       "blocked": "외부 의존성으로 중단됨.",
-      "done": "완료.",
+      "done": "종료.",
       "cancelled": "진행하지 않기로 함."
     },
     "pr_auto_complete_badge": "PR 병합 시 자동 설정",

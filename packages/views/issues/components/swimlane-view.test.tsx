@@ -812,7 +812,7 @@ describe("SwimLaneView", () => {
       />,
     );
     expect(screen.getByText("Hidden columns")).toBeInTheDocument();
-    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.getByText("Closed")).toBeInTheDocument();
   });
 
   it("calls onMoveIssue on drag-and-drop end", () => {
