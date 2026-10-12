@@ -162,6 +162,11 @@ terminal, which is the right thing when you want Ctrl-C to stop everything.
 
 ## First-Time Setup
 
+Google is the only sign-in method. To sign in from the browser locally, create
+a Google OAuth **Web application** client with
+`http://localhost:<FRONTEND_PORT>/auth/callback` as an authorized redirect URI
+and set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your env file.
+
 ### Quick Start (recommended)
 
 From any checkout (main or worktree):
@@ -434,7 +439,9 @@ make up C=api,web,daemon
 ```
 
 It creates the environment if needed, sets the fixed local verification code
-before the first launch, logs in as `dev@localhost`, mints a personal access
+before the first launch (which also reopens the email-code endpoints for this
+automation only; the UI signs in with Google), logs in as `dev@localhost`
+through the API, mints a personal access
 token, creates a workspace, writes the CLI profile, builds `server/bin/multica`
 and starts the daemon from that binary. It then prints the URL, the login, the
 commit, and the stop command.

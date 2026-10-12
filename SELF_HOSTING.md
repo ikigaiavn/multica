@@ -55,7 +55,7 @@ multica setup self-host
 
 This installs the `multica` CLI, checks out the latest self-host assets, pulls the official Multica images from GHCR, and configures everything for localhost.
 
-Open http://localhost:3000. To log in, configure `RESEND_API_KEY` in `.env` for email-based codes (recommended), or leave Resend unset and copy the generated code from the backend logs. See [Step 2 — Log In](#step-2--log-in) for details.
+Open http://localhost:3000. Sign-in is Google only, so set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env` first. See [Step 2 — Log In](#step-2--log-in) for details.
 
 > **Prerequisites:** Docker and Docker Compose must be installed. The script checks for this and provides install links if missing.
 >
@@ -96,11 +96,15 @@ Once ready:
 
 ### Step 2 — Log In
 
-Open http://localhost:3000 in your browser. The Docker self-host stack defaults to `APP_ENV=production` (set in `docker-compose.selfhost.yml`), and there is no fixed verification code by default. Pick one of the following to log in:
+Open http://localhost:3000 in your browser. Google is the only sign-in method. Before you can log in:
 
-- **Recommended (production):** configure `RESEND_API_KEY` in `.env`, then restart the backend. Real verification codes will be sent to the email address you enter. See [Advanced Configuration → Email](SELF_HOSTING_ADVANCED.md#email-required-for-authentication).
-- **Without email configured:** the verification code is generated server-side and printed to the backend container logs (look for `[DEV] Verification code for ...:`). Useful for one-off testing on a single machine.
-- **Deterministic local/private testing:** set `APP_ENV=development` and `MULTICA_DEV_VERIFICATION_CODE=888888` in `.env`, then restart the backend. This fixed code is ignored when `APP_ENV=production`.
+1. In [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), create an **OAuth client ID** of type **Web application**.
+2. Add `<your frontend origin>/auth/callback` (for example `http://localhost:3000/auth/callback`) under **Authorized redirect URIs**.
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`, then restart the backend.
+
+Until both are set, the login page shows a "Google sign-in isn't configured" notice and nobody can sign in. See [Advanced Configuration → Google OAuth](SELF_HOSTING_ADVANCED.md#google-oauth-required-for-sign-in).
+
+Email code login is closed. It only reopens, as an automation back door, when `APP_ENV` is not `production` **and** `MULTICA_DEV_VERIFICATION_CODE` is a six-digit code — never do that on a publicly reachable instance.
 
 Changes to `ALLOW_SIGNUP`, `DISABLE_WORKSPACE_CREATION`, and `GOOGLE_CLIENT_ID` also take effect after restarting the backend / compose stack. The web UI reads all three from `/api/config` at runtime, so no web rebuild is needed. See [Advanced Configuration → Signup Controls](SELF_HOSTING_ADVANCED.md#signup-controls-optional) for the recommended sequence to lock down workspace creation.
 
@@ -282,35 +286,16 @@ Then open http://multica.dev.lan in your browser.
 
 ### Step 5 — Log In
 
-The chart defaults to `APP_ENV=production` (set in `values.yaml` under `backend.config.appEnv`), and there is no fixed verification code by default. Pick one of the following to log in — the same three options as the Docker setup:
+Google is the only sign-in method. Create a Google **Web application** OAuth client whose authorized redirect URI is `<your frontend origin>/auth/callback` (the chart's `backend.config.googleRedirectUri`), then set `backend.config.googleClientId` in your values file and the client secret in the Secret:
 
-- **Recommended (production):** patch the Secret with a real Resend key, then restart the backend:
+```bash
+kubectl -n multica patch secret multica-secrets --type=merge \
+  -p '{"stringData":{"GOOGLE_CLIENT_SECRET":"xxx"}}'
+helm upgrade multica oci://ghcr.io/multica-ai/charts/multica \
+  --version <chart-version> -n multica -f my-values.yaml
+```
 
-  ```bash
-  kubectl -n multica patch secret multica-secrets --type=merge \
-    -p '{"stringData":{"RESEND_API_KEY":"re_xxx"}}'
-  kubectl -n multica rollout restart deploy/multica-backend
-  ```
-
-  Real verification codes will be sent to the email address you enter. See [Advanced Configuration → Email](SELF_HOSTING_ADVANCED.md#email-required-for-authentication).
-
-- **Without email configured:** the verification code is generated server-side and printed to the backend pod logs (look for `[DEV] Verification code for ...:`). Useful for one-off testing.
-
-  ```bash
-  kubectl -n multica logs -f deploy/multica-backend | grep "Verification code"
-  ```
-
-- **Deterministic local/private testing:** set `backend.config.appEnv: development` in your values file and `MULTICA_DEV_VERIFICATION_CODE=888888` in the Secret, then `helm upgrade` and restart. This fixed code is ignored when `APP_ENV=production`.
-
-  ```bash
-  helm upgrade multica oci://ghcr.io/multica-ai/charts/multica \
-    --version <chart-version> \
-    -n multica \
-    -f my-values.yaml --set backend.config.appEnv=development
-  kubectl -n multica patch secret multica-secrets --type=merge \
-    -p '{"stringData":{"MULTICA_DEV_VERIFICATION_CODE":"888888"}}'
-  kubectl -n multica rollout restart deploy/multica-backend
-  ```
+Until both are set, the login page shows a "Google sign-in isn't configured" notice and nobody can sign in. Email code login is closed; with the chart's default `APP_ENV=production` it cannot be reopened.
 
 `ALLOW_SIGNUP`, `DISABLE_WORKSPACE_CREATION`, and `GOOGLE_CLIENT_ID` likewise live under `backend.config.*` in `values.yaml` (as `allowSignup`, `disableWorkspaceCreation`, and `googleClientId`). After `helm upgrade`, the backend pod will roll automatically because the ConfigMap hash changes; the web UI reads all three from `/api/config` at runtime, so no web rebuild is needed.
 
