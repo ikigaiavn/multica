@@ -95,9 +95,11 @@ type Task struct {
 	// (MUL-6460): key/name/category/description per status, already in catalog
 	// order. Rendered into the brief's status-command line; empty (including on
 	// old servers that never send the field) keeps the brief byte-identical to
-	// the built-in-only form. IssueStatusesOmitted is the cap overflow count.
+	// the built-in-only form. IssueStatusesOmitted is the cap overflow count;
+	// ArchivedBuiltIns are built-ins the workspace archived (Blocked).
 	IssueStatuses                 []IssueStatusData      `json:"issue_statuses,omitempty"`
 	IssueStatusesOmitted          int                    `json:"issue_statuses_omitted,omitempty"`
+	ArchivedBuiltIns              []string               `json:"archived_built_in_statuses,omitempty"`
 	ThreadName                    string                 `json:"thread_name,omitempty"` // semantic title for provider-native session/thread history
 	Agent                         *AgentData             `json:"agent,omitempty"`
 	ConnectedApps                 []ConnectedAppData     `json:"connected_apps,omitempty"` // per-run app capabilities mounted through runtime MCP overlays

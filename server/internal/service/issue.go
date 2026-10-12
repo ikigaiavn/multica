@@ -274,14 +274,15 @@ func (s *IssueService) Create(ctx context.Context, p IssueCreateParams, opts Iss
 		}
 	}
 
-	// A create landing on a CUSTOM status takes the shared catalog lock AND
+	// A create landing on an archivable (custom or Blocked) status takes the shared catalog lock AND
 	// re-resolves the status inside this transaction. The caller validated the
 	// status before the transaction opened, which is early enough to return a
 	// clean 400 but too early to be safe: an archive can commit in between.
 	// Re-checking under the lock is what makes the status provably active at
-	// the moment the row is written. Built-in statuses skip both — they can
-	// never be archived, so the common path is unchanged. (MUL-6243)
-	if !issuestatus.IsBuiltIn(p.Status) {
+	// the moment the row is written. Built-in statuses other than Blocked skip
+	// both — they can never be archived, so the common path is unchanged.
+	// (MUL-6243)
+	if issuestatus.IsArchivable(p.Status) {
 		if err := qtx.LockIssueStatusCatalogShared(ctx, p.WorkspaceID); err != nil {
 			return IssueCreateResult{}, err
 		}

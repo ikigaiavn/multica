@@ -17,7 +17,7 @@ UPDATE issue_status SET
     updated_at = now()
 WHERE id = $1::uuid
   AND workspace_id = $2::uuid
-  AND is_system = FALSE
+  AND (is_system = FALSE OR key = 'blocked')
   AND archived_at IS NULL
 RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon
 `
@@ -27,8 +27,8 @@ type ArchiveIssueStatusEntryParams struct {
 	WorkspaceID pgtype.UUID `json:"workspace_id"`
 }
 
-// Built-ins are excluded by is_system: archiving one would delete its
-// category's behavior definition.
+// Built-ins are excluded except Blocked: archiving any other would delete its
+// category's behavior definition (issue_status_system_archivable_blocked_only).
 //
 // Archiving retires a status from future use only. Issues already on it keep
 // it — Effective ignores archived_at, so their behavior is unchanged — while
@@ -382,9 +382,9 @@ SELECT pg_advisory_xact_lock_shared(hashtextextended($1::uuid::text || ':issue_s
 // Shared holders do not block each other, so concurrent issue writes keep their
 // current throughput; they only block against archive's exclusive lock.
 //
-// Built-in statuses deliberately do NOT take this lock: a built-in can never be
-// archived (enforced by issue_status_system_not_archivable), so there is nothing
-// to race with, and the overwhelmingly common write path stays lock-free.
+// Built-in statuses other than Blocked deliberately do NOT take this lock: they
+// can never be archived (enforced by issue_status_system_archivable_blocked_only),
+// so there is nothing to race with, and the common write path stays lock-free.
 func (q *Queries) LockIssueStatusCatalogShared(ctx context.Context, workspaceID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, lockIssueStatusCatalogShared, workspaceID)
 	return err
@@ -426,6 +426,47 @@ func (q *Queries) ReorderIssueStatusEntries(ctx context.Context, arg ReorderIssu
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const restoreIssueStatusEntry = `-- name: RestoreIssueStatusEntry :one
+UPDATE issue_status SET
+    archived_at = NULL,
+    updated_at = now()
+WHERE id = $1::uuid
+  AND workspace_id = $2::uuid
+  AND is_system = TRUE
+  AND key = 'blocked'
+  AND archived_at IS NOT NULL
+RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon
+`
+
+type RestoreIssueStatusEntryParams struct {
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+// Brings an archived Blocked back. Custom statuses have no restore: their name
+// may since have been reused by an active status (the per-workspace unique
+// name index covers active rows only).
+func (q *Queries) RestoreIssueStatusEntry(ctx context.Context, arg RestoreIssueStatusEntryParams) (IssueStatus, error) {
+	row := q.db.QueryRow(ctx, restoreIssueStatusEntry, arg.ID, arg.WorkspaceID)
+	var i IssueStatus
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Key,
+		&i.Name,
+		&i.Description,
+		&i.Category,
+		&i.Color,
+		&i.IsSystem,
+		&i.Position,
+		&i.ArchivedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Icon,
+	)
+	return i, err
 }
 
 const seedIssueStatusEntries = `-- name: SeedIssueStatusEntries :exec

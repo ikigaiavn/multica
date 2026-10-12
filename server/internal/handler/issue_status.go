@@ -382,14 +382,15 @@ func validIssueStatusIcon(icon string) bool {
 	}
 }
 
-// ArchiveIssueStatus retires an empty custom status from future assignment.
+// ArchiveIssueStatus retires an empty custom status — or the built-in Blocked,
+// the one built-in a workspace may hide — from future assignment.
 func (h *Handler) ArchiveIssueStatus(w http.ResponseWriter, r *http.Request) {
 	entry, wsUUID, member, ok := h.loadIssueStatusForAdmin(w, r)
 	if !ok {
 		return
 	}
 
-	if entry.IsSystem {
+	if entry.IsSystem && !issuestatus.IsArchivable(entry.Key) {
 		writeError(w, http.StatusForbidden, "built-in statuses cannot be archived")
 		return
 	}
@@ -456,6 +457,39 @@ func (h *Handler) ArchiveIssueStatus(w http.ResponseWriter, r *http.Request) {
 	// catalog and cache the pre-archive row as the new truth.
 	h.publishIssueStatusChanged(uuidToString(wsUUID), member, "archived")
 	writeJSON(w, http.StatusOK, issueStatusToResponse(archived))
+}
+
+// RestoreIssueStatus brings an archived Blocked back into use. It is the only
+// restorable status: a retired custom status's name may since belong to an
+// active one, so custom archival stays one-way.
+func (h *Handler) RestoreIssueStatus(w http.ResponseWriter, r *http.Request) {
+	entry, wsUUID, member, ok := h.loadIssueStatusForAdmin(w, r)
+	if !ok {
+		return
+	}
+	if !entry.IsSystem || entry.Key != issuestatus.Blocked {
+		writeError(w, http.StatusForbidden, "only the built-in Blocked status can be restored")
+		return
+	}
+	if !entry.ArchivedAt.Valid {
+		writeJSON(w, http.StatusOK, issueStatusToResponse(entry))
+		return
+	}
+	restored, err := h.Queries.RestoreIssueStatusEntry(r.Context(), db.RestoreIssueStatusEntryParams{
+		ID:          entry.ID,
+		WorkspaceID: wsUUID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeError(w, http.StatusConflict, "status is no longer restorable")
+			return
+		}
+		slog.Warn("RestoreIssueStatus failed", append(logger.RequestAttrs(r), "error", err)...)
+		writeError(w, http.StatusInternalServerError, "failed to restore issue status")
+		return
+	}
+	h.publishIssueStatusChanged(uuidToString(wsUUID), member, "restored")
+	writeJSON(w, http.StatusOK, issueStatusToResponse(restored))
 }
 
 // loadIssueStatusForAdmin resolves the {id} path param inside the caller's

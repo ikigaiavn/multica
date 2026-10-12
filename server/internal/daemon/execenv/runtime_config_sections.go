@@ -2,6 +2,7 @@ package execenv
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/multica-ai/multica/server/internal/issuestatus"
@@ -319,9 +320,24 @@ var briefStatusCategoryOrder = issuestatus.Categories()
 // headings or break out of the surrounding inline markdown. Keys are
 // CHECK-constrained server-side; sanitizeBriefCodeToken is defense-in-depth,
 // and an entry whose key fails it is dropped rather than rendered mangled.
+// briefBuiltInStatusOrder is the order the built-in-only status line has always
+// listed the seven keys in; kept verbatim so that line stays byte-identical.
+var briefBuiltInStatusOrder = []string{"todo", "in_progress", "in_review", "done", "blocked", "backlog", "cancelled"}
+
 func writeIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
+	archived := make(map[string]bool, len(ctx.ArchivedBuiltIns))
+	for _, key := range ctx.ArchivedBuiltIns {
+		archived[key] = true
+	}
 	if len(ctx.IssueStatuses) == 0 {
-		b.WriteString("- `multica issue status <id> <status>` — flip status (todo / in_progress / in_review / done / blocked / backlog / cancelled).\n")
+		// Byte-identical to the pre-catalog line unless a built-in is archived.
+		keys := make([]string, 0, len(briefBuiltInStatusOrder))
+		for _, key := range briefBuiltInStatusOrder {
+			if !archived[key] {
+				keys = append(keys, key)
+			}
+		}
+		fmt.Fprintf(b, "- `multica issue status <id> <status>` — flip status (%s).\n", strings.Join(keys, " / "))
 		return
 	}
 	byCategory := make(map[string][]IssueStatusForEnv, len(briefStatusCategoryOrder))
@@ -340,7 +356,13 @@ func writeIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
 	b.WriteString("- `multica issue status <id> <status>` — flip status. Available statuses by lifecycle category:\n")
 	for _, category := range briefStatusCategoryOrder {
 		customs := byCategory[category]
-		fmt.Fprintf(b, "  - %s category: `%s` (built-in)", category, strings.Join(issuestatus.BehaviorsForCategory(category), "`, `"))
+		builtIns := make([]string, 0, 3)
+		for _, key := range issuestatus.BehaviorsForCategory(category) {
+			if !archived[key] {
+				builtIns = append(builtIns, key)
+			}
+		}
+		fmt.Fprintf(b, "  - %s category: `%s` (built-in)", category, strings.Join(builtIns, "`, `"))
 		for _, s := range customs {
 			name := sanitizeNameForBriefMarkdown(s.Name)
 			desc := sanitizeNameForBriefMarkdown(s.Description)
@@ -780,7 +802,13 @@ func writeWorkflowIssue(b *strings.Builder, ctx TaskContextForEnv) {
 	b.WriteString("Status reflects the state the ISSUE is in, not your run's lifecycle — keep it true at every point in the turn, not only at checkpoints: write the new value the moment your work changes it, mid-turn included. Write only when the new value differs from the current one, whoever the assignee is:\n\n")
 	b.WriteString("- You delivered what the issue itself asks for and it awaits acceptance → `in_review`. Delivering an issue assigned to you — including a sub-issue in a chain or stage — always lands here; stage barriers and parent notifications depend on that signal. `done` stays human.\n")
 	b.WriteString("- The issue's work continues beyond this turn — you dispatched sub-issues, or delivered one part with more underway → `in_progress`.\n")
-	b.WriteString("- You cannot proceed without something you are missing → `blocked`, and post a comment explaining the blocker unless your Agent Identity forbids issue comments.\n")
+	if slices.Contains(ctx.ArchivedBuiltIns, issuestatus.Blocked) {
+		// The workspace retired Blocked, so a stuck issue keeps its status and
+		// the comment alone carries the blocker.
+		b.WriteString("- You cannot proceed without something you are missing → leave the status as it is (this workspace has retired its Blocked status) and post a comment explaining the blocker unless your Agent Identity forbids issue comments.\n")
+	} else {
+		b.WriteString("- You cannot proceed without something you are missing → `blocked`, and post a comment explaining the blocker unless your Agent Identity forbids issue comments.\n")
+	}
 	if ctx.IsSquadLeader {
 		b.WriteString("- Squad leader: dispatching members is not delivery — a dispatch turn leaves the parent `in_progress`, and it moves to `in_review` only on the later turn (a member update or stage-barrier re-trigger) where you confirm the overall goal is met.\n")
 	}

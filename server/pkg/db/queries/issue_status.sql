@@ -88,8 +88,8 @@ WHERE id = sqlc.arg('id')::uuid
 RETURNING *;
 
 -- name: ArchiveIssueStatusEntry :one
--- Built-ins are excluded by is_system: archiving one would delete its
--- category's behavior definition.
+-- Built-ins are excluded except Blocked: archiving any other would delete its
+-- category's behavior definition (issue_status_system_archivable_blocked_only).
 --
 -- Archiving retires a status from future use only. Issues already on it keep
 -- it — Effective ignores archived_at, so their behavior is unchanged — while
@@ -99,8 +99,22 @@ UPDATE issue_status SET
     updated_at = now()
 WHERE id = sqlc.arg('id')::uuid
   AND workspace_id = sqlc.arg('workspace_id')::uuid
-  AND is_system = FALSE
+  AND (is_system = FALSE OR key = 'blocked')
   AND archived_at IS NULL
+RETURNING *;
+
+-- name: RestoreIssueStatusEntry :one
+-- Brings an archived Blocked back. Custom statuses have no restore: their name
+-- may since have been reused by an active status (the per-workspace unique
+-- name index covers active rows only).
+UPDATE issue_status SET
+    archived_at = NULL,
+    updated_at = now()
+WHERE id = sqlc.arg('id')::uuid
+  AND workspace_id = sqlc.arg('workspace_id')::uuid
+  AND is_system = TRUE
+  AND key = 'blocked'
+  AND archived_at IS NOT NULL
 RETURNING *;
 
 -- name: CountIssuesUsingStatusKey :one
@@ -126,9 +140,9 @@ SELECT pg_advisory_xact_lock(hashtextextended(sqlc.arg('workspace_id')::uuid::te
 -- Shared holders do not block each other, so concurrent issue writes keep their
 -- current throughput; they only block against archive's exclusive lock.
 --
--- Built-in statuses deliberately do NOT take this lock: a built-in can never be
--- archived (enforced by issue_status_system_not_archivable), so there is nothing
--- to race with, and the overwhelmingly common write path stays lock-free.
+-- Built-in statuses other than Blocked deliberately do NOT take this lock: they
+-- can never be archived (enforced by issue_status_system_archivable_blocked_only),
+-- so there is nothing to race with, and the common write path stays lock-free.
 SELECT pg_advisory_xact_lock_shared(hashtextextended(sqlc.arg('workspace_id')::uuid::text || ':issue_status', 0));
 
 -- name: ListIssueStatusKeysByCategories :many

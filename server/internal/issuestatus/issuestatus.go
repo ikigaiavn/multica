@@ -109,6 +109,15 @@ func IsBuiltIn(key string) bool {
 	return ok
 }
 
+// IsArchivable reports whether a workspace may archive the status with this
+// key: any custom status, and Blocked — the one built-in that defines no
+// lifecycle category of its own, so retiring it removes a choice rather than a
+// behavior. Write paths use it to decide whether they must re-check the status
+// under the catalog lock (an unarchivable status cannot race an archive).
+func IsArchivable(key string) bool {
+	return !IsBuiltIn(key) || key == Blocked
+}
+
 // Categories returns the four lifecycle categories in display order.
 func Categories() []string {
 	out := make([]string, len(categoryOrder))
@@ -489,8 +498,8 @@ func Resolve(ctx context.Context, q Querier, workspaceID pgtype.UUID, status str
 		return db.IssueStatus{}, err
 	}
 	if entry.ArchivedAt.Valid {
-		// A built-in can never be archived (enforced by a table constraint),
-		// so reaching here means a custom status was retired.
+		// A retired custom status, or Blocked — the only built-in a workspace
+		// may archive (issue_status_system_archivable_blocked_only).
 		return db.IssueStatus{}, ErrUnknownStatus
 	}
 	return entry, nil
@@ -514,9 +523,11 @@ func builtInEntry(workspaceID pgtype.UUID, key string) db.IssueStatus {
 // error messages and CLI validation. An unseeded workspace still reports the 7
 // built-ins, so an error message can never omit a key that Resolve accepts.
 func ActiveKeys(ctx context.Context, q Querier, workspaceID pgtype.UUID) ([]string, error) {
+	// Archived rows are read too, only so an archived built-in (Blocked) counts
+	// as present and is not re-added by the unseeded fallback below.
 	entries, err := q.ListIssueStatusEntries(ctx, db.ListIssueStatusEntriesParams{
 		WorkspaceID:     workspaceID,
-		IncludeArchived: false,
+		IncludeArchived: true,
 	})
 	if err != nil {
 		return nil, err
@@ -524,8 +535,11 @@ func ActiveKeys(ctx context.Context, q Querier, workspaceID pgtype.UUID) ([]stri
 	keys := make([]string, 0, len(entries)+len(canonicalOrder))
 	seen := make(map[string]bool, len(entries))
 	for _, e := range entries {
-		keys = append(keys, e.Key)
 		seen[e.Key] = true
+		if e.ArchivedAt.Valid {
+			continue
+		}
+		keys = append(keys, e.Key)
 	}
 	for _, key := range canonicalOrder {
 		if !seen[key] {
@@ -548,7 +562,7 @@ func ActiveKeys(ctx context.Context, q Querier, workspaceID pgtype.UUID) ([]stri
 func ActiveKeyLabels(ctx context.Context, q Querier, workspaceID pgtype.UUID) ([]string, error) {
 	entries, err := q.ListIssueStatusEntries(ctx, db.ListIssueStatusEntriesParams{
 		WorkspaceID:     workspaceID,
-		IncludeArchived: false,
+		IncludeArchived: true,
 	})
 	if err != nil {
 		return nil, err
@@ -557,6 +571,9 @@ func ActiveKeyLabels(ctx context.Context, q Querier, workspaceID pgtype.UUID) ([
 	seen := make(map[string]bool, len(entries))
 	for _, e := range entries {
 		seen[e.Key] = true
+		if e.ArchivedAt.Valid {
+			continue
+		}
 		if IsBuiltIn(e.Key) || strings.TrimSpace(e.Name) == "" {
 			labels = append(labels, e.Key)
 			continue
@@ -663,18 +680,28 @@ func (r *Resolver) Category(ctx context.Context, q Querier, status string) strin
 }
 
 // WritableCategory returns the category of a status a background writer may
-// still move an issue to: a built-in (resolved without I/O), or a custom
-// status that exists and is not archived. It returns "" for anything else,
+// still move an issue to: an unarchivable built-in (resolved without I/O), or
+// Blocked / a custom status that is not archived. It returns "" for anything else,
 // including a failed catalog read, so side-effect callers fail closed. It
 // mirrors Resolve's rules while sharing the Resolver's single catalog read.
 func (r *Resolver) WritableCategory(ctx context.Context, q Querier, status string) string {
-	if IsBuiltIn(status) {
+	if !IsArchivable(status) {
 		category, _ := CategoryForBehavior(status)
 		return category
 	}
 	r.load(ctx, q)
 	if r.archived[status] {
 		return ""
+	}
+	if IsBuiltIn(status) {
+		// Blocked: writable unless archived. A failed read fails closed like
+		// the custom branch below; an unseeded workspace has no row and stays
+		// writable.
+		if r.loadErr != nil {
+			return ""
+		}
+		category, _ := CategoryForBehavior(status)
+		return category
 	}
 	category := r.categories[status]
 	if !IsCategory(category) {

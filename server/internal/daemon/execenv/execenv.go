@@ -214,6 +214,9 @@ type TaskContextForEnv struct {
 	// cap dropped from IssueStatuses, so the brief can disclose truncation
 	// instead of presenting a partial catalog as complete.
 	IssueStatusesOmitted int
+	// ArchivedBuiltIns are built-in keys the workspace archived; the
+	// brief omits them from the status command.
+	ArchivedBuiltIns []string
 	// ConnectedApps lists per-run external app capabilities mounted through
 	// MCP overlays. Rendered briefly so the agent can map app names such as
 	// Notion to the actual MCP server name (`composio`).
