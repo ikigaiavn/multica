@@ -2,10 +2,10 @@
  * The browser tab title contract for the web app.
  *
  * Two writers produce titles and they must agree: Next.js metadata renders the
- * `<title>` for statically known routes (landing, auth), and
+ * `<title>` for statically known routes (auth), and
  * `WorkspaceDocumentTitle` sets `document.title` on workspace routes, whose
  * names only exist in the query cache. Both go through the constants here so
- * `Issues | Multica` and `Changelog | Multica` can never drift into two
+ * `Issues | Multica` and `Login | Multica` can never drift into two
  * different separators.
  *
  * Pure and React-free on purpose: the root layout is a server component and
@@ -13,7 +13,7 @@
  */
 
 /** Root fallback — the title of a page that has nothing more specific to say. */
-export const SITE_TITLE = "Multica — Project Management for Human + Agent Teams";
+export const SITE_TITLE = "Multica";
 
 /** Appended to every page-specific title. */
 export const TITLE_SUFFIX = " | Multica";

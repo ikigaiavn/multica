@@ -120,15 +120,6 @@ function renderCallback(locale: SupportedLocale = "en") {
 describe("CallbackPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset the source-backfill dismiss counter so a test that writes
-    // it doesn't leak state into the next test (and the next test
-    // doesn't inherit a cap-reached state from a previous run).
-    for (let i = window.localStorage.length - 1; i >= 0; i--) {
-      const k = window.localStorage.key(i);
-      if (k && k.startsWith("multica.source_backfill.dismiss.")) {
-        window.localStorage.removeItem(k);
-      }
-    }
     // Snapshot keys before deleting — forEach + delete skips entries because
     // the iteration index advances while the underlying list shrinks.
     Array.from(mockSearchParams.keys()).forEach((k) =>
@@ -256,46 +247,16 @@ describe("CallbackPage", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("unonboarded user honors a safe next= (e.g. /invite/{id}) so invitees aren't trapped", async () => {
-    mockSearchParams.set("state", "next:/invite/abc123");
+  it("a user with no workspace lands on /workspaces/new", async () => {
     renderCallback();
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/invite/abc123");
+      expect(mockPush).toHaveBeenCalledWith(paths.newWorkspace());
     });
-    expect(mockPush).not.toHaveBeenCalledWith(paths.onboarding());
-    // nextUrl is a fast path — listMyInvitations should not be queried.
+    // Pending invitations no longer gate sign-in.
     expect(mockListMyInvitations).not.toHaveBeenCalled();
   });
 
-  it("unonboarded user with no next= and no pending invitations lands on /onboarding", async () => {
-    renderCallback();
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(paths.onboarding());
-    });
-    expect(mockListMyInvitations).toHaveBeenCalled();
-  });
-
-  it("unonboarded user with pending invitations lands on /invitations", async () => {
-    mockListMyInvitations.mockResolvedValue([
-      {
-        id: "inv-1",
-        workspace_id: "ws-1",
-        workspace_name: "Acme",
-        role: "member",
-        status: "pending",
-      },
-    ]);
-    renderCallback();
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(paths.invitations());
-    });
-    expect(mockPush).not.toHaveBeenCalledWith(paths.onboarding());
-  });
-
-  it("onboarded user with workspace lands in that workspace", async () => {
-    mockLoginWithGoogle.mockResolvedValue(
-      makeUser({ onboarded_at: "2026-01-01T00:00:00Z" }),
-    );
+  it("a user with a workspace lands in that workspace", async () => {
     mockListWorkspaces.mockResolvedValue([
       {
         id: "ws-1",
@@ -315,15 +276,10 @@ describe("CallbackPage", () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith(paths.workspace("acme").issues());
     });
-    // Already-onboarded users skip the listMyInvitations check; new invites
-    // surface in the sidebar instead of the wall.
     expect(mockListMyInvitations).not.toHaveBeenCalled();
   });
 
-  it("onboarded user ignores unsafe next= targets and lands on the default destination", async () => {
-    mockLoginWithGoogle.mockResolvedValue(
-      makeUser({ onboarded_at: "2026-01-01T00:00:00Z" }),
-    );
+  it("ignores unsafe next= targets and lands on the default destination", async () => {
     mockSearchParams.set("state", "next:https://evil.example");
 
     renderCallback();
@@ -334,24 +290,13 @@ describe("CallbackPage", () => {
     expect(mockPush).not.toHaveBeenCalledWith("https://evil.example");
   });
 
-  it("onboarded user honors a safe next= target (e.g. /invite/{id})", async () => {
-    mockLoginWithGoogle.mockResolvedValue(
-      makeUser({ onboarded_at: "2026-01-01T00:00:00Z" }),
-    );
+  it("honors a safe next= target (e.g. /invite/{id})", async () => {
     mockSearchParams.set("state", "next:/invite/abc123");
 
     renderCallback();
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/invite/abc123");
-    });
-  });
-
-  it("falls through to /onboarding when listMyInvitations errors", async () => {
-    mockListMyInvitations.mockRejectedValue(new Error("network"));
-    renderCallback();
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(paths.onboarding());
     });
   });
 
@@ -409,7 +354,7 @@ describe("CallbackPage", () => {
       expect(mockLoginWithGoogle).toHaveBeenCalled();
     });
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(paths.onboarding());
+      expect(mockPush).toHaveBeenCalledWith(paths.newWorkspace());
     });
   });
 
@@ -486,35 +431,5 @@ describe("CallbackPage", () => {
         value: originalLocation,
       });
     }
-  });
-
-  it("onboarded users with missing source land in the workspace; the source-backfill modal is mounted there", async () => {
-    // Source attribution backfill is now an in-workspace modal — see
-    // `<SourceBackfillModal />` mounted inside `DashboardLayout`. The
-    // callback page is intentionally agnostic about it.
-    mockLoginWithGoogle.mockResolvedValue(
-      makeUser({
-        onboarded_at: "2026-01-01T00:00:00Z",
-        onboarding_questionnaire: {},
-      }),
-    );
-    mockListWorkspaces.mockResolvedValue([
-      {
-        id: "ws-1",
-        name: "Acme",
-        slug: "acme",
-        description: null,
-        context: null,
-        settings: {},
-        repos: [],
-        issue_prefix: "ACME",
-        created_at: "",
-        updated_at: "",
-      },
-    ]);
-    renderCallback();
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(paths.workspace("acme").issues());
-    });
   });
 });
