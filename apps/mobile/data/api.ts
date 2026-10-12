@@ -148,11 +148,6 @@ if (!API_URL) {
   );
 }
 
-export interface LoginResponse {
-  token: string;
-  user: User;
-}
-
 /** Mobile file payload for `uploadFile`. RN doesn't have a browser `File`
  *  object; the fetch `FormData` polyfill accepts `{ uri, name, type }`
  *  directly and streams from disk. expo-image-picker / expo-document-picker
@@ -386,20 +381,6 @@ class ApiClient {
   }
 
   // --- Auth ---
-  async sendCode(email: string): Promise<void> {
-    await this.fetch<void>("/auth/send-code", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-  }
-
-  async verifyCode(email: string, code: string): Promise<LoginResponse> {
-    return this.fetch<LoginResponse>("/auth/verify-code", {
-      method: "POST",
-      body: JSON.stringify({ email, code }),
-    });
-  }
-
   /**
    * Ask the server to extend this session if it has entered its renewal
    * window (MUL-7436). The server owns that decision — the app never reads

@@ -1,6 +1,9 @@
 /**
  * Mobile auth store — Zustand. Logic mirrors packages/core/auth/store.ts:
- *   - Token written ONLY on successful verifyCode
+ *   - Google is the only sign-in method. The web login page runs the OAuth
+ *     round-trip and hands the JWT back via `multica://auth/callback`
+ *     (see lib/google-auth.ts); loginWithToken persists it only once
+ *     /api/me accepts it
  *   - 401 → clear token; non-401 (5xx / network blip) → preserve token so
  *     the next launch can retry
  *   - logout = clear token + clear in-memory user + setToken(null)
@@ -20,8 +23,8 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   initialize: () => Promise<void>;
-  sendCode: (email: string) => Promise<void>;
-  verifyCode: (email: string, code: string) => Promise<User>;
+  /** Adopt a JWT handed back by the web Google sign-in flow. */
+  loginWithToken: (token: string) => Promise<User>;
   logout: () => Promise<void>;
   /** Overwrite the in-memory user — call after PATCH /api/me so name/avatar
    *  edits land without a refetch. Server response is the source of truth. */
@@ -62,18 +65,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  sendCode: async (email) => {
-    await api.sendCode(email);
-  },
-
-  verifyCode: async (email, code) => {
-    const { token, user } = await api.verifyCode(email, code);
+  loginWithToken: async (token) => {
     // Signing in replaces the credential just as decisively as signing out:
     // a renewal still in flight for the previous account must not write its
     // result over this one.
     invalidateSessionEpoch();
-    await setToken(token);
     api.setToken(token);
+    let user: User;
+    try {
+      user = await api.getMe();
+    } catch (err) {
+      api.setToken(null);
+      throw err;
+    }
+    await setToken(token);
     set({ user });
     return user;
   },

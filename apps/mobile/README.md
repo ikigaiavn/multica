@@ -103,7 +103,10 @@ Unit tests do not replace this device validation.
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env.development.local
 # then edit EXPO_PUBLIC_API_URL inside it to your Mac's LAN IP, e.g. http://192.168.1.42:8080
+# and EXPO_PUBLIC_WEB_URL to the web frontend on the same host, e.g. http://192.168.1.42:3000
 ```
+
+Sign-in is Google-only and runs through the web app: the login screen opens `EXPO_PUBLIC_WEB_URL/login?platform=mobile` in the system auth session, and the web app returns the session through `multica://auth/callback`. Without `EXPO_PUBLIC_WEB_URL` the app cannot sign in, and the backend must have Google OAuth configured with `<EXPO_PUBLIC_WEB_URL>/auth/callback` as an authorized redirect URI.
 
 If your Apple ID isn't on the Multica Apple Developer team yet, also set `EXPO_BUNDLE_IDENTIFIER_DEV` to a reverse-domain you own (e.g. `com.yourname.multica.dev`). For a personal production build, set `EXPO_BUNDLE_IDENTIFIER_PROD` in `.env.production.local`.
 
@@ -149,7 +152,7 @@ A free Apple ID signs builds for **7 days only**, Debug and Release both. After 
 
 ## Pointing at a different backend
 
-Edit `EXPO_PUBLIC_API_URL` in `.env.staging`, `.env.production.local`, or `.env.development.local` (whichever variant you're running). Then:
+Edit `EXPO_PUBLIC_API_URL` (and the matching `EXPO_PUBLIC_WEB_URL`) in `.env.staging`, `.env.production.local`, or `.env.development.local` (whichever variant you're running). Then:
 
 - For an installed **Debug build**: restart Metro (`pnpm dev:mobile:staging`) so the next JS bundle picks up the new value.
 - For an installed **Release build**: re-run the `ios:mobile:device:staging:release` command — the value is baked into the embedded bundle at build time.
