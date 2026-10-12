@@ -388,16 +388,20 @@ type AgentTaskResponse struct {
 	// IssueStatuses is the workspace's ACTIVE CUSTOM status catalog (MUL-6460),
 	// injected into the agent brief so agents can see and use statuses beyond
 	// the seven built-ins. Built-ins are omitted: their keys, names, and
-	// semantics are locked (is_system rows cannot be renamed or archived), so
-	// the daemon already knows them. Empty for a workspace with no custom
+	// semantics are locked (is_system rows cannot be renamed; the one that can
+	// be archived travels in ArchivedBuiltIns), so the daemon already knows them. Empty for a workspace with no custom
 	// statuses — the daemon then renders the brief exactly as before, keeping
 	// existing deployments byte-identical. Capped at taskIssueStatusCap
 	// entries; IssueStatusesOmitted carries the overflow count.
 	IssueStatuses []TaskIssueStatusData `json:"issue_statuses,omitempty"`
 	// IssueStatusesOmitted is how many active custom statuses were dropped by
 	// the cap, so the brief can say the list is incomplete instead of
-	// presenting a truncated catalog as the whole one.
+	// presenting a truncated catalog as the whole one. ArchivedBuiltIns names
+	// built-ins the workspace archived (only `blocked` can be) so the brief
+	// leaves them out; omitted when none, and daemons that predate it list all
+	// seven while the server's 400 corrects them.
 	IssueStatusesOmitted int                   `json:"issue_statuses_omitted,omitempty"`
+	ArchivedBuiltIns     []string              `json:"archived_built_in_statuses,omitempty"`
 	ThreadName           string                `json:"thread_name,omitempty"` // semantic title for provider-native session/thread history
 	Status               string                `json:"status"`
 	Priority             int32                 `json:"priority"`

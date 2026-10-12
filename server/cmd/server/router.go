@@ -2122,6 +2122,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Route("/{id}", func(r chi.Router) {
 					r.Patch("/", h.UpdateIssueStatus)
 					r.Delete("/", h.ArchiveIssueStatus)
+					r.Post("/restore", h.RestoreIssueStatus)
 				})
 			})
 

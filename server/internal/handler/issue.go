@@ -234,11 +234,11 @@ var errIssueStatusArchivedRace = errors.New("issue status was archived while the
 //   - writer first: archive blocks until this transaction commits, then its
 //     issue count rejects archival of the now-occupied status.
 //
-// A built-in status is a no-op: it can never be archived (enforced by
-// issue_status_system_not_archivable), so the common path takes no lock and
-// pays nothing. (MUL-6243)
+// A built-in other than Blocked is a no-op: it can never be archived (enforced
+// by issue_status_system_archivable_blocked_only), so the common path takes no
+// lock and pays nothing. (MUL-6243)
 func assertIssueStatusStillActive(ctx context.Context, qtx *db.Queries, workspaceID pgtype.UUID, statusKey string) error {
-	if statusKey == "" || issuestatus.IsBuiltIn(statusKey) {
+	if statusKey == "" || !issuestatus.IsArchivable(statusKey) {
 		return nil
 	}
 	// Catalog lock before any row lock, everywhere, so the two write paths
@@ -255,13 +255,13 @@ func assertIssueStatusStillActive(ctx context.Context, qtx *db.Queries, workspac
 	return nil
 }
 
-// runWithIssueStatusGuard runs an issue write that lands on a custom status
+// runWithIssueStatusGuard runs an issue write that lands on an archivable status
 // inside a transaction that re-verifies the status under the shared catalog
 // lock (see assertIssueStatusStillActive). Request writes also carry trusted
 // wakeup actor identity in transaction-local settings, including built-in targets.
 func (h *Handler) runWithIssueStatusGuard(ctx context.Context, workspaceID pgtype.UUID, statusKey string, fn func(q *db.Queries) error) error {
 	_, hasActor := ctx.Value(wakeupActorKey{}).(wakeupActor)
-	if !hasActor && (statusKey == "" || issuestatus.IsBuiltIn(statusKey)) {
+	if !hasActor && (statusKey == "" || !issuestatus.IsArchivable(statusKey)) {
 		return fn(h.Queries)
 	}
 	tx, err := h.beginWakeupWrite(ctx)

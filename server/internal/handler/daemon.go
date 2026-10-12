@@ -3547,7 +3547,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 	// Failure degrades to the built-in-only brief rather than failing the claim.
 	if entries, err := h.Queries.ListIssueStatusEntries(r.Context(), db.ListIssueStatusEntriesParams{
 		WorkspaceID:     parseUUID(resp.WorkspaceID),
-		IncludeArchived: false,
+		IncludeArchived: true,
 	}); err != nil {
 		slog.Warn("task claim: failed to load issue status catalog for brief injection",
 			"task_id", uuidToString(task.ID),
@@ -3557,6 +3557,12 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 	} else {
 		for _, entry := range entries {
 			if entry.IsSystem {
+				if entry.ArchivedAt.Valid {
+					resp.ArchivedBuiltIns = append(resp.ArchivedBuiltIns, entry.Key)
+				}
+				continue
+			}
+			if entry.ArchivedAt.Valid {
 				continue
 			}
 			if len(resp.IssueStatuses) == taskIssueStatusCap {

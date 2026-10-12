@@ -195,3 +195,25 @@ func TestBriefStatusCatalogUnknownCategoriesDisclosed(t *testing.T) {
 		}
 	}
 }
+
+// TestBriefOmitsArchivedBuiltIns: a workspace that archived Blocked must not
+// be told to use it, with or without custom statuses.
+func TestBriefOmitsArchivedBuiltIns(t *testing.T) {
+	t.Parallel()
+	base := TaskContextForEnv{IssueID: "issue-1", AgentID: "a-1", AgentName: "Eve", ArchivedBuiltIns: []string{"blocked"}}
+	out := buildMetaSkillContent("claude", base)
+	want := "- `multica issue status <id> <status>` — flip status (todo / in_progress / in_review / done / backlog / cancelled).\n"
+	if !strings.Contains(out, want) {
+		t.Fatalf("built-in line must drop archived Blocked\n---\n%s", out)
+	}
+
+	withCatalog := base
+	withCatalog.IssueStatuses = []IssueStatusForEnv{{Key: "rework", Name: "Rework", Category: "todo"}}
+	out = buildMetaSkillContent("claude", withCatalog)
+	if !strings.Contains(out, "  - started category: `in_progress`, `in_review` (built-in)") {
+		t.Fatalf("started category must drop archived Blocked\n---\n%s", out)
+	}
+	if strings.Contains(out, "`blocked`") {
+		t.Errorf("brief still offers `blocked`\n---\n%s", out)
+	}
+}
