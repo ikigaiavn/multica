@@ -39,8 +39,11 @@ coverage
 # app workspaces so they do not silently enter the build context.
 /apps/*
 !/apps/web/
+!/apps/mobile/patches/
 
 # Repository-only tooling
 /.github/
 /deploy/
+# The Fly image copies its Caddyfile and start script from here.
+!/deploy/fly/
 /scripts/

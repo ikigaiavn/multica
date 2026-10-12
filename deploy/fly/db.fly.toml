@@ -1,0 +1,24 @@
+# Postgres for ikigaia-work. Private only: reach it at
+# ikigaia-work-db.internal:5432 over Fly's private network.
+# Secret (fly secrets set): POSTGRES_PASSWORD.
+app = "ikigaia-work-db"
+primary_region = "sin"
+
+[build]
+  image = "postgres:17"
+
+[env]
+  PGDATA = "/var/lib/postgresql/data/pgdata"
+  POSTGRES_DB = "multica"
+  POSTGRES_USER = "multica"
+
+[[mounts]]
+  source = "pg_data"
+  destination = "/var/lib/postgresql/data"
+
+[[restart]]
+  policy = "always"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
