@@ -16,9 +16,14 @@ import {
   CardDescription,
   CardContent,
 } from "@multica/ui/components/ui/card";
-import { Button } from "@multica/ui/components/ui/button";
 import { useT } from "@multica/views/i18n";
 import { Loader2 } from "lucide-react";
+import {
+  AppHandoffCard,
+  appCallbackUrl,
+  parseAppPlatform,
+  type AppPlatform,
+} from "@/features/auth/app-handoff";
 import { callbackErrorFrom, type CallbackError } from "./callback-error";
 
 const authLogger = createLogger("auth.callback");
@@ -30,7 +35,10 @@ function CallbackContent() {
   const qc = useQueryClient();
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
   const [error, setError] = useState<CallbackError | null>(null);
-  const [desktopToken, setDesktopToken] = useState<string | null>(null);
+  const [appHandoff, setAppHandoff] = useState<{
+    platform: AppPlatform;
+    token: string;
+  } | null>(null);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -52,7 +60,8 @@ function CallbackContent() {
 
     const state = searchParams.get("state") || "";
     const stateParts = state.split(",");
-    const isDesktop = stateParts.includes("platform:desktop");
+    const platformPart = stateParts.find((p) => p.startsWith("platform:"));
+    const appPlatform = parseAppPlatform(platformPart?.slice("platform:".length));
     const nextPart = stateParts.find((p) => p.startsWith("next:"));
     // Strip "next:" prefix, then drop anything that isn't a safe relative path
     // so an attacker-controlled `state=next:https://evil` cannot redirect here.
@@ -91,16 +100,16 @@ function CallbackContent() {
           authLogger.error("CLI Google OAuth callback failed", err);
           setError(callbackErrorFrom(err));
         });
-    } else if (isDesktop) {
-      // Desktop flow: exchange code for token, then redirect via deep link
+    } else if (appPlatform) {
+      // Desktop/mobile flow: exchange code for token, then redirect via deep link
       api
         .googleLogin(code, redirectUri)
         .then(({ token }) => {
-          setDesktopToken(token);
-          window.location.href = `multica://auth/callback?token=${encodeURIComponent(token)}`;
+          setAppHandoff({ platform: appPlatform, token });
+          window.location.href = appCallbackUrl(token);
         })
         .catch((err) => {
-          authLogger.error("Desktop Google OAuth callback failed", err);
+          authLogger.error(`${appPlatform} Google OAuth callback failed`, err);
           setError(callbackErrorFrom(err));
         });
     } else {
@@ -181,31 +190,8 @@ function CallbackContent() {
     }
   })();
 
-  if (desktopToken) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-display-sm">
-              {t(($) => $.web.desktop_handoff.opening_title)}
-            </CardTitle>
-            <CardDescription>
-              {t(($) => $.web.desktop_handoff.opening_description)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                window.location.href = `multica://auth/callback?token=${encodeURIComponent(desktopToken)}`;
-              }}
-            >
-              {t(($) => $.web.desktop_handoff.open_button)}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (appHandoff) {
+    return <AppHandoffCard platform={appHandoff.platform} token={appHandoff.token} />;
   }
 
   if (error) {

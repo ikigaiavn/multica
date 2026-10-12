@@ -27,10 +27,6 @@ export function DesktopLoginPage() {
       <DragStrip />
       <LoginPage
         logo={<MulticaIcon bordered size="lg" />}
-        onSuccess={() => {
-          // Auth store update triggers AppContent re-render → shows DesktopShell.
-          // Initial workspace navigation happens in routes.tsx via IndexRedirect.
-        }}
         onGoogleLogin={handleGoogleLogin}
       />
     </div>

@@ -7,9 +7,14 @@ test.describe("Authentication", () => {
     await waitForPageText(page, "Sign in to Multica");
 
     await expect(page.getByText("Sign in to Multica")).toBeVisible();
-    await expect(page.getByRole("textbox", { name: "Email" })).toBeVisible();
-    await expect(page.getByPlaceholder("you@example.com")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
+    // Google is the only sign-in method: no email form, and either the Google
+    // button or the operator notice when the server has no Google client.
+    await expect(page.getByRole("textbox")).toHaveCount(0);
+    await expect(
+      page
+        .getByRole("button", { name: "Continue with Google" })
+        .or(page.getByText(/GOOGLE_CLIENT_ID/)),
+    ).toBeVisible();
   });
 
   test("login and redirect to /issues", async ({ page }) => {
