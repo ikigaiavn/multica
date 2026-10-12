@@ -160,3 +160,13 @@ describe("route coverage stays in step with paths.ts", () => {
     }
   });
 });
+
+describe("bucketDiagnosticPath — slug-less workspace paths", () => {
+  it("buckets them like their slugged form", () => {
+    expect(bucketDiagnosticPath("/issues")).toBe("/:slug/issues");
+    expect(bucketDiagnosticPath("/issues/MUL-5345")).toBe("/:slug/issues/:id");
+    expect(bucketDiagnosticPath("/runtimes/machine-1/runtime/rt-2")).toBe(
+      bucketDiagnosticPath("/acme/runtimes/machine-1/runtime/rt-2"),
+    );
+  });
+});

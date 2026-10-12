@@ -109,3 +109,15 @@ describe("tabSubjectKey", () => {
     ).toBe("attachment:a1:x.pdf");
   });
 });
+
+describe("parseTabSubject — slug-less workspace paths", () => {
+  it("parses the implicit workspace mode's URLs", () => {
+    expect(parseTabSubject("/issues/MUL-1")).toEqual({ kind: "issue", id: "MUL-1" });
+    expect(parseTabSubject("/runtimes/machine-1/runtime/rt-2")).toEqual({
+      kind: "runtime",
+      machineId: "machine-1",
+      runtimeId: "rt-2",
+    });
+    expect(parseTabSubject("/chat?session=s1")).toEqual({ kind: "chat", sessionId: "s1" });
+  });
+});

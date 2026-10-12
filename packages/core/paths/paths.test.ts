@@ -1,5 +1,13 @@
-import { describe, it, expect } from "vitest";
-import { paths, isGlobalPath } from "./paths";
+import { afterEach, describe, it, expect } from "vitest";
+import {
+  WORKSPACE_ROUTE_SEGMENTS,
+  configurePaths,
+  getImplicitWorkspaceSlug,
+  isGlobalPath,
+  paths,
+  splitWorkspacePath,
+} from "./paths";
+import { isReservedSlug } from "./reserved-slugs";
 
 describe("paths.workspace(slug)", () => {
   const ws = paths.workspace("acme");
@@ -62,5 +70,60 @@ describe("isGlobalPath", () => {
   it("returns false for workspace-scoped paths", () => {
     expect(isGlobalPath("/acme/issues")).toBe(false);
     expect(isGlobalPath("/")).toBe(false);
+  });
+});
+
+describe("implicit workspace mode", () => {
+  afterEach(() => configurePaths({ implicitWorkspaceSlug: null }));
+
+  it("keeps the slug prefix when unconfigured", () => {
+    expect(paths.workspace("acme").issueDetail("MUL-1")).toBe("/acme/issues/MUL-1");
+  });
+
+  it("drops the prefix for the implicit workspace only", () => {
+    configurePaths({ implicitWorkspaceSlug: "acme" });
+    expect(paths.workspace("acme").issues()).toBe("/issues");
+    expect(paths.workspace("acme").issueDetail("MUL-1")).toBe("/issues/MUL-1");
+    expect(paths.workspace("acme").chatSession("s1")).toBe("/chat?session=s1");
+    expect(paths.workspace("other").issues()).toBe("/other/issues");
+  });
+
+  it("normalizes the configured slug", () => {
+    configurePaths({ implicitWorkspaceSlug: "  Acme " });
+    expect(getImplicitWorkspaceSlug()).toBe("acme");
+    configurePaths({ implicitWorkspaceSlug: "" });
+    expect(getImplicitWorkspaceSlug()).toBeNull();
+  });
+});
+
+describe("splitWorkspacePath", () => {
+  afterEach(() => configurePaths({ implicitWorkspaceSlug: null }));
+
+  it("splits slugged paths", () => {
+    expect(splitWorkspacePath("/acme/issues/MUL-1?x=1#h")).toEqual({
+      slug: "acme",
+      implicit: false,
+      rest: ["issues", "MUL-1"],
+    });
+  });
+
+  it("treats a route segment first as a slug-less path", () => {
+    expect(splitWorkspacePath("/issues/MUL-1")).toEqual({
+      slug: null,
+      implicit: true,
+      rest: ["issues", "MUL-1"],
+    });
+    configurePaths({ implicitWorkspaceSlug: "acme" });
+    expect(splitWorkspacePath("/chat").slug).toBe("acme");
+  });
+
+  it("handles the root", () => {
+    expect(splitWorkspacePath("/")).toEqual({ slug: null, implicit: false, rest: [] });
+  });
+
+  it("covers every reserved workspace route segment", () => {
+    for (const segment of WORKSPACE_ROUTE_SEGMENTS) {
+      expect(isReservedSlug(segment)).toBe(true);
+    }
   });
 });

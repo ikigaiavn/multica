@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { CoreProvider } from "@multica/core/platform";
+import { configurePaths } from "@multica/core/paths";
 import { createBrowserCookieLocaleAdapter } from "@multica/core/i18n/browser";
 import type { LocaleResources, SupportedLocale } from "@multica/core/i18n";
 import packageJson from "../package.json";
@@ -50,13 +51,20 @@ export function WebProviders({
   resources,
   apiBaseUrl,
   wsUrl,
+  implicitWorkspaceSlug = null,
 }: {
   children: React.ReactNode;
   locale: SupportedLocale;
   resources: Record<string, LocaleResources>;
   apiBaseUrl?: string;
   wsUrl?: string;
+  /** Workspace whose URLs carry no slug; see config/implicit-workspace.ts. */
+  implicitWorkspaceSlug?: string | null;
 }) {
+  // Set during render, before any child builds a path. The value is fixed for
+  // the deployment, so repeating it on every render (and on the server) is
+  // idempotent.
+  configurePaths({ implicitWorkspaceSlug });
   const cookieAuth = !hasLegacyToken();
   const syncUserLocale = useUserLocaleSyncEnabled();
   // Stable identity reference so downstream effects keyed on it don't see a

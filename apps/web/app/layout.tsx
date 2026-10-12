@@ -13,6 +13,7 @@ import {
   resolveBrowserApiBaseUrl,
   resolveBrowserWsUrl,
 } from "@/config/runtime-urls";
+import { resolveImplicitWorkspaceSlug } from "@/config/implicit-workspace";
 import "./globals.css";
 
 // Inter is the Latin UI face. next/font produces a hashed family (`__Inter_xxx`)
@@ -113,6 +114,7 @@ export default async function RootLayout({
   const resources = { [locale]: RESOURCES[locale] };
   const apiBaseUrl = resolveBrowserApiBaseUrl(process.env);
   const wsUrl = resolveBrowserWsUrl(process.env);
+  const implicitWorkspaceSlug = resolveImplicitWorkspaceSlug(process.env);
 
   return (
     <html
@@ -145,6 +147,7 @@ export default async function RootLayout({
             resources={resources}
             apiBaseUrl={apiBaseUrl}
             wsUrl={wsUrl}
+            implicitWorkspaceSlug={implicitWorkspaceSlug}
           >
             {children}
           </WebProviders>

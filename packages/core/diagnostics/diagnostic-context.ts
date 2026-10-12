@@ -7,6 +7,8 @@
 // so an in-thread freeze event carries a real route. Web sets nothing and keeps
 // using `location.pathname`.
 
+import { splitWorkspacePath } from "../paths/paths";
+
 let route: string | null = null;
 
 /** Longest route we keep; these are our own short templates. */
@@ -118,8 +120,10 @@ export function bucketDiagnosticPath(path: string): string {
   const first = segments[0]!;
   if (GLOBAL_SECTIONS.has(first)) return `/${first}/*`;
 
-  // Everything else is workspace-scoped; the leading segment is the slug.
-  const rest = segments.slice(1);
+  // Everything else is workspace-scoped. The leading segment is the slug,
+  // unless the path is a slug-less one from the implicit workspace mode; both
+  // shapes bucket the same so the field stays groupable.
+  const { rest } = splitWorkspacePath(pathname);
   if (rest.length === 0) return "/:slug";
 
   const scoped = matchRoute(rest, WORKSPACE_ROUTES);

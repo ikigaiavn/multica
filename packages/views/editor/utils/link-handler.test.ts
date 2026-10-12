@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { configurePaths } from "@multica/core/paths";
 import {
   openLink,
   parseWorkspaceEntityLink,
@@ -259,5 +260,31 @@ describe("parseWorkspaceEntityLink", () => {
 
   it("returns null for a malformed percent-escape", () => {
     expect(parseWorkspaceEntityLink("/acme/projects/%E0%A4%A")).toBeNull();
+  });
+});
+
+describe("implicit workspace mode", () => {
+  afterEach(() => configurePaths({ implicitWorkspaceSlug: null }));
+
+  it("treats slug-less app URLs as internal", () => {
+    expect(toInternalAppPath(`${APP_ORIGIN}/issues/MUL-1`, APP_ORIGIN)).toBe("/issues/MUL-1");
+  });
+
+  it("re-adds the slug to a slug-less link when the current workspace is not implicit", () => {
+    openLink("/issues/MUL-1", "acme", APP_ORIGIN);
+    expect(navigatedPaths()).toEqual(["/acme/issues/MUL-1"]);
+  });
+
+  it("keeps slug-less links slug-less in the implicit workspace", () => {
+    configurePaths({ implicitWorkspaceSlug: "acme" });
+    openLink(`${APP_ORIGIN}/issues/MUL-1`, "acme", APP_ORIGIN);
+    expect(navigatedPaths()).toEqual(["/issues/MUL-1"]);
+  });
+
+  it("canonicalizes slugged links to the implicit workspace", () => {
+    configurePaths({ implicitWorkspaceSlug: "acme" });
+    openLink("/acme/issues/MUL-1?tab=a", "acme", APP_ORIGIN);
+    openLink("/other/issues/MUL-2", "acme", APP_ORIGIN);
+    expect(navigatedPaths()).toEqual(["/issues/MUL-1?tab=a", "/other/issues/MUL-2"]);
   });
 });

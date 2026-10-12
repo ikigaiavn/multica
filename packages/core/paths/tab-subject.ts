@@ -13,6 +13,7 @@
  * Chat) rides in the query string, so it is parsed too — the URL is the single
  * source of truth for what a tab has open, including which item.
  */
+import { splitWorkspacePath } from "./paths";
 import { pageForSegment, type WorkspacePageKey } from "./route-icons";
 
 export type TabActorType = "agent" | "member" | "squad";
@@ -48,32 +49,29 @@ export type TabSubject =
   /** An unrecognized URL. Never impersonate a real page. */
   | { kind: "unknown" };
 
-/** Split a URL into its `/`-separated pathname segments and its query params. */
-function splitUrl(url: string): { segments: string[]; query: URLSearchParams } {
+/** Parse a URL's query params, ignoring any hash. */
+function queryOf(url: string): URLSearchParams {
   const hashIdx = url.indexOf("#");
   const withoutHash = hashIdx === -1 ? url : url.slice(0, hashIdx);
   const queryIdx = withoutHash.indexOf("?");
-  const pathname = queryIdx === -1 ? withoutHash : withoutHash.slice(0, queryIdx);
-  const search = queryIdx === -1 ? "" : withoutHash.slice(queryIdx + 1);
-  return {
-    segments: pathname.split("/").filter(Boolean),
-    query: new URLSearchParams(search),
-  };
+  return new URLSearchParams(queryIdx === -1 ? "" : withoutHash.slice(queryIdx + 1));
 }
+
 
 /**
  * Resolve a workspace tab URL into a {@link TabSubject}.
  *
- * Only recognizes workspace-scoped URLs (`/{slug}/{segment}/...`). Anything
+ * Only recognizes workspace-scoped URLs (`/{slug}/{segment}/...`, or the
+ * slug-less `/{segment}/...` of the implicit workspace mode). Anything
  * shorter, empty, or with an unknown segment resolves to `{ kind: "unknown" }`
  * — never to a default page, so an unrecognized tab is visibly neutral rather
  * than masquerading as Issues.
  */
 export function parseTabSubject(url: string): TabSubject {
-  const { segments, query } = splitUrl(url);
-  // segments[0] is the workspace slug; the route segment is at index 1.
-  const segment = segments[1] ?? "";
-  const id = segments[2] ?? "";
+  const query = queryOf(url);
+  const { rest } = splitWorkspacePath(url);
+  const segment = rest[0] ?? "";
+  const id = rest[1] ?? "";
 
   switch (segment) {
     case "issues":
@@ -109,8 +107,8 @@ export function parseTabSubject(url: string): TabSubject {
     case "runtimes":
       if (!id) return { kind: "page", page: "runtimes" };
       // `/runtimes/:machineId/runtime/:runtimeId` — nested runtime.
-      if (segments[3] === "runtime" && segments[4]) {
-        return { kind: "runtime", machineId: id, runtimeId: segments[4] };
+      if (rest[2] === "runtime" && rest[3]) {
+        return { kind: "runtime", machineId: id, runtimeId: rest[3] };
       }
       return { kind: "machine", machineId: id };
     case "skills":

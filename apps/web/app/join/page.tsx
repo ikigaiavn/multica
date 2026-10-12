@@ -9,6 +9,7 @@ import { Card, CardContent } from "@multica/ui/components/ui/card";
 import { Badge } from "@multica/ui/components/ui/badge";
 import { useAuthStore } from "@multica/core/auth";
 import { workspaceKeys } from "@multica/core/workspace/queries";
+import { paths } from "@multica/core/paths";
 import type { ShareLinkInfo, Workspace } from "@multica/core/types";
 
 function JoinInner() {
@@ -61,7 +62,7 @@ function JoinInner() {
         const list = await api.listWorkspaces().catch(() => [] as Workspace[]);
         queryClient.setQueryData(workspaceKeys.list(), list);
         setTimeout(() => {
-          router.push(`/${result.workspace_slug || result.workspace_id}/issues`);
+          router.push(paths.workspace(result.workspace_slug || result.workspace_id).issues());
         }, 1200);
       })
       .catch(async (e) => {
@@ -71,7 +72,7 @@ function JoinInner() {
           // Already joined: go straight to the workspace this invite points at
           // rather than the account's first workspace.
           if (info?.workspace_slug) {
-            router.push(`/${info.workspace_slug}/issues`);
+            router.push(paths.workspace(info.workspace_slug).issues());
             return;
           }
           try {
@@ -79,7 +80,7 @@ function JoinInner() {
             queryClient.setQueryData(workspaceKeys.list(), workspaces as any);
             const first = workspaces[0];
             if (first) {
-              router.push(`/${first.slug}/issues`);
+              router.push(paths.workspace(first.slug).issues());
               return;
             }
           } catch {

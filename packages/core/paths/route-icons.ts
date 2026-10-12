@@ -18,6 +18,8 @@
  * error.
  */
 
+import { splitWorkspacePath } from "./paths";
+
 /** Every icon name a nav page or a tab type-icon can resolve to. */
 export type RouteIconName =
   | "Inbox"
@@ -119,8 +121,9 @@ export const DEFAULT_ROUTE_ICON_NAME: RouteIconName = "ListTodo";
 /**
  * Resolve the *page* icon name for a workspace-scoped path or full tab URL.
  *
- * Nav and page paths are `/{slug}/{segment}/...`, so the route segment lives
- * at index 1; any search/hash suffix is ignored. Sub-routes keep the parent
+ * Nav and page paths are `/{slug}/{segment}/...` (or slug-less
+ * `/{segment}/...` in the implicit workspace mode); any search/hash suffix is
+ * ignored. Sub-routes keep the parent
  * page's icon. Returns {@link DEFAULT_ROUTE_ICON_NAME} for unknown or
  * too-short paths, so the result is always a renderable name.
  *
@@ -128,8 +131,7 @@ export const DEFAULT_ROUTE_ICON_NAME: RouteIconName = "ListTodo";
  * resource detail routes — it resolves a richer presentation instead.
  */
 export function resolveRouteIconName(path: string): RouteIconName {
-  const pathname = path.split(/[?#]/)[0] ?? "";
-  const segment = pathname.split("/").filter(Boolean)[1] ?? "";
+  const segment = splitWorkspacePath(path).rest[0] ?? "";
   const page = pageForSegment(segment);
   return page ? WORKSPACE_PAGES[page].icon : DEFAULT_ROUTE_ICON_NAME;
 }
