@@ -90,24 +90,13 @@ describe("proxy legacy workspace route redirects", () => {
   });
 
   it("sends logged-in legacy URLs without a last workspace cookie to login", () => {
-    // Not root: the root-path rule below leaves "/" on the public site for the
-    // official marketing hosts even with a session, so bouncing there would
-    // dead-end on the landing page. /login resolves against the workspace list
-    // instead. The deep-link query is dropped because feeding a legacy path
-    // back through `next` would return here and loop.
+    // /login resolves against the workspace list. The deep-link query is
+    // dropped because feeding a legacy path back through `next` would return
+    // here and loop.
     expect(
       redirectLocation("/squads?view=members", { multica_logged_in: "1" }),
     ).toBe("https://app.multica.test/login");
   });
-
-  it.each(["multica.ai", "www.multica.ai"])(
-    "resolves a slugless session off the marketing host %s instead of stranding it",
-    (host) => {
-      expect(
-        redirectLocation("/inbox", { multica_logged_in: "1" }, host),
-      ).toBe(`https://${host}/login`);
-    },
-  );
 
   it("does not redirect workspace-scoped URLs whose first segment is already a slug", () => {
     expect(redirectLocation("/acme/squads", sessionCookies)).toBeNull();
@@ -119,18 +108,6 @@ describe("proxy legacy workspace route redirects", () => {
     );
   });
 
-  it.each(["multica.ai", "www.multica.ai"])(
-    "does not redirect public marketing root on %s",
-    (host) => {
-      expect(redirectLocation("/", sessionCookies, host)).toBeNull();
-    },
-  );
-
-  it("still redirects explicit legacy app routes on the public marketing host", () => {
-    expect(redirectLocation("/issues/ABC-123", sessionCookies, "multica.ai")).toBe(
-      "https://multica.ai/acme/issues/ABC-123",
-    );
-  });
 });
 
 describe("proxy runtime upstream rewrites", () => {
@@ -276,6 +253,26 @@ describe("proxy root and locale handling", () => {
     expect(res.headers.get("location")).toBe(
       "https://app.multica.test/acme/issues",
     );
+  });
+
+  it("sends logged-out root visits to login", () => {
+    expect(redirectLocation("/?utm=x")).toBe("https://app.multica.test/login");
+  });
+
+  it.each(["multica.ai", "www.multica.ai"])(
+    "treats root on %s like any other host",
+    (host) => {
+      expect(redirectLocation("/", { multica_logged_in: "1", last_workspace_slug: "acme" }, host)).toBe(
+        `https://${host}/acme/issues`,
+      );
+    },
+  );
+
+  it("lets a logged-in root visit without a last workspace reach the app root page", () => {
+    const res = proxy(makeRequest("/", { multica_logged_in: "1" }));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("location")).toBeNull();
   });
 
   it("forwards locale on login requests", () => {

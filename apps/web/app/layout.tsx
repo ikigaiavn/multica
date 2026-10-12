@@ -73,13 +73,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.multica.ai"),
   title: {
     default: SITE_TITLE,
     template: TITLE_TEMPLATE,
   },
-  description:
-    "Source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: ["/favicon.svg"],
@@ -100,22 +97,10 @@ export const metadata: Metadata = {
     // padding, which no surface in the app has yet.
     statusBarStyle: "default",
   },
-  openGraph: {
-    type: "website",
-    siteName: "Multica",
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@multica_hq",
-    creator: "@multica_hq",
-  },
-  alternates: {
-    canonical: "/",
-  },
+  // Internal deployment: keep every page out of search engines.
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
   },
 };
 
