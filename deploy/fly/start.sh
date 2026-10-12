@@ -20,7 +20,10 @@ PORT=8081 ./server &
 backend_pid=$!
 
 cd /app/web
-PORT=3000 HOSTNAME=127.0.0.1 REMOTE_API_URL=http://127.0.0.1:8081 node apps/web/server.js &
+# HOSTNAME must be "localhost": Next builds the request URL it compares
+# rewrites against from it, while the proxy sees "localhost". With 127.0.0.1
+# the implicit-workspace rewrite looks external and loops through a redirect.
+PORT=3000 HOSTNAME=localhost REMOTE_API_URL=http://127.0.0.1:8081 node apps/web/server.js &
 web_pid=$!
 
 caddy run --config /etc/caddy/Caddyfile --adapter caddyfile &

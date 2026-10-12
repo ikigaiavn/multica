@@ -17,6 +17,7 @@
 	}
 
 	handle {
-		reverse_proxy 127.0.0.1:3000
+		# Next listens on "localhost", which may resolve to ::1 only.
+		reverse_proxy localhost:3000
 	}
 }
