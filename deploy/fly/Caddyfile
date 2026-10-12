@@ -1,0 +1,22 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+# Fly terminates TLS and forwards plain HTTP to :8080. The web app proxies
+# /api, /auth and /uploads to the backend itself; only the WebSocket goes
+# straight to the backend, as the single-domain layout in
+# SELF_HOSTING_ADVANCED.md requires.
+:8080 {
+	@ws path /ws /ws/*
+	handle @ws {
+		reverse_proxy 127.0.0.1:8081 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}

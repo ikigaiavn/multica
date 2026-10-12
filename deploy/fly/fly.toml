@@ -1,0 +1,45 @@
+# Multica (internal) on Fly.io: one machine serving work.ikigaia.vn.
+# Secrets (fly secrets set): DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID,
+# GOOGLE_CLIENT_SECRET.
+app = "ikigaia-work"
+primary_region = "sin"
+
+[env]
+  APP_ENV = "production"
+  FRONTEND_ORIGIN = "https://work.ikigaia.vn"
+  CORS_ALLOWED_ORIGINS = "https://work.ikigaia.vn"
+  MULTICA_APP_URL = "https://work.ikigaia.vn"
+  MULTICA_PUBLIC_URL = "https://work.ikigaia.vn"
+  MULTICA_DAEMON_SERVER_URL = "wss://work.ikigaia.vn/ws"
+  GOOGLE_REDIRECT_URI = "https://work.ikigaia.vn/auth/callback"
+  LOCAL_UPLOAD_DIR = "/data/uploads"
+  LOCAL_UPLOAD_BASE_URL = "https://work.ikigaia.vn"
+  DEFAULT_WORKSPACE_SLUG = "ikigaia"
+  DEFAULT_WORKSPACE_NAME = "ikigaia"
+  ALLOWED_EMAIL_DOMAINS = "ikigaia.vn"
+  ALLOW_SIGNUP = "false"
+  DISABLE_WORKSPACE_CREATION = "true"
+  DO_NOT_TRACK = "1"
+
+[[mounts]]
+  source = "uploads"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Agents and the daemon hold WebSockets; keep the machine running.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "60s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/api/config"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
