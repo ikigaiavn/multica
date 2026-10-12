@@ -60,8 +60,8 @@
     "category_labels": {
       "unstarted": "未开始",
       "started": "已开始",
-      "done": "已完成",
-      "closed": "已关闭"
+      "done": "已关闭",
+      "closed": "已取消"
     },
     "categories": {
       "unstarted": "尚未开始的工作，包括待规划和已规划的任务。",
@@ -73,9 +73,9 @@
       "backlog": "搁置。把任务移到这里不会启动智能体。",
       "todo": "排队中。把任务移到这里会启动指派的智能体。",
       "in_progress": "正在进行。",
-      "in_review": "已交付，等待人工审核。会结束自动化运行。",
+      "in_review": "已解决，等待人工确认。会结束自动化运行。",
       "blocked": "被外部依赖阻塞。",
-      "done": "已完成。",
+      "done": "已关闭。",
       "cancelled": "决定不做。"
     },
     "pr_auto_complete_badge": "PR 合并后自动进入",

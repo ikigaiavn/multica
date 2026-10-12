@@ -44,7 +44,7 @@ describe("buildIssueStatusCatalog", () => {
     expect(c.categoryOf("blocked")).toBe("started");
     expect(c.categoryOf("done")).toBe("done");
     expect(c.categoryOf("cancelled")).toBe("closed");
-    expect(c.labelOf("in_review")).toBe("In Review");
+    expect(c.labelOf("in_review")).toBe("Resolved");
   });
 
   it("maps a custom status to its category and name", () => {

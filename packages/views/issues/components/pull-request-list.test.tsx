@@ -420,14 +420,14 @@ describe("PullRequestList auto-complete", () => {
     mockPRs = [makePR({ id: "a", number: 12, state: "merged" }), makePR({ id: "b", number: 19 })];
     mockAutoComplete = decision("waiting", ["b"], { target_status: "in_review" });
     renderList();
-    expect(await screen.findByTestId("pr-auto-complete-line")).toHaveTextContent("Moves to In Review when #19 merges");
+    expect(await screen.findByTestId("pr-auto-complete-line")).toHaveTextContent("Moves to Resolved when #19 merges");
   });
 
-  it("falls back to Done on a backend that does not name the target", async () => {
+  it("falls back to Closed on a backend that does not name the target", async () => {
     mockPRs = [makePR({ id: "b", number: 19 })];
     mockAutoComplete = decision("waiting", ["b"], { target_status: undefined });
     renderList();
-    expect(await screen.findByTestId("pr-auto-complete-line")).toHaveTextContent("Moves to Done when #19 merges");
+    expect(await screen.findByTestId("pr-auto-complete-line")).toHaveTextContent("Moves to Closed when #19 merges");
   });
 
   it("offers to remove a PR that closed without merging", async () => {
@@ -442,7 +442,7 @@ describe("PullRequestList auto-complete", () => {
     // Removing the last unmerged PR moved the issue; the toast says so and
     // offers no undo.
     await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Removed #19. Every remaining PR is merged, so the issue moved to Done."),
+      expect(toastMock.success).toHaveBeenCalledWith("Removed #19. Every remaining PR is merged, so the issue moved to Closed."),
     );
   });
 

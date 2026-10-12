@@ -124,14 +124,14 @@ test("a member waits for a condition the platform checks", async ({ page }) => {
     await form.getByRole("button", { name: /Choose a condition/ }).click();
     await page.getByRole("menuitem", { name: /A field changes to a value/ }).click();
     await form.getByRole("button", { name: /Choose a status/ }).click();
-    await page.getByRole("menuitemradio", { name: "In Review" }).click();
+    await page.getByRole("menuitemradio", { name: "Resolved" }).click();
     await form.getByLabel("What to do when woken").fill("Review the design once it is ready.");
     await form.getByRole("button", { name: /^Create/ }).click();
     await expect(form).toBeHidden();
 
-    const rule = page.getByRole("button", { name: /When this issue moves to In Review/ });
+    const rule = page.getByRole("button", { name: /When this issue moves to Resolved/ });
     await expect(rule).toBeVisible();
-    await expect(page.getByRole("button", { name: /Condition Grok: Waiting for In Review/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Condition Grok: Waiting for Resolved/ })).toBeVisible();
     const stored = await db.query<{ id: string; condition: unknown; event_types: string[] }>(
       `SELECT id, condition, event_types FROM issue_wakeup WHERE issue_id = $1`,
       [issue.id],
@@ -150,12 +150,12 @@ test("a member waits for a condition the platform checks", async ({ page }) => {
         { timeout: 75_000, intervals: [2_000] },
       )
       .toBe(1);
-    await expect(page.getByText("When this issue moves to In Review · woke Condition Grok")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("When this issue moves to Resolved · woke Condition Grok")).toBeVisible({ timeout: 20_000 });
 
     await page.goto(`/${workspace.slug}/autopilots?tab=wakeups`, { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: /^All/ }).click();
     const row = page.getByRole("row", { name: /Review the upload design/ });
-    await expect(row).toContainText("When this issue moves to In Review");
+    await expect(row).toContainText("When this issue moves to Resolved");
     await expect(row).toContainText("1");
     await expect(page.getByRole("columnheader", { name: "Runs (7 days)" })).toBeVisible();
   } finally {

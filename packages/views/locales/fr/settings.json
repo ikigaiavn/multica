@@ -60,8 +60,8 @@
     "category_labels": {
       "unstarted": "Non démarré",
       "started": "Démarrage",
-      "done": "Terminé",
-      "closed": "Fermée"
+      "done": "Fermé",
+      "closed": "Annulé"
     },
     "categories": {
       "unstarted": "Travail non démarré, qu'il soit planifié ou dans le backlog.",
@@ -73,9 +73,9 @@
       "backlog": "En attente. Affecter une tâche ici ne démarre jamais un agent.",
       "todo": "En file. Déplacer une tâche ici démarre l'agent qui lui est affecté.",
       "in_progress": "En cours de traitement.",
-      "in_review": "Livré, en attente d'une relecture humaine. Clôt l'exécution de l'autopilote.",
+      "in_review": "Résolu, en attente d'une confirmation humaine. Clôt l'exécution de l'autopilote.",
       "blocked": "À l'arrêt, en attente d'une dépendance extérieure.",
-      "done": "Terminé.",
+      "done": "Fermé.",
       "cancelled": "Abandonné."
     },
     "pr_auto_complete_badge": "Définie à la fusion des PR",

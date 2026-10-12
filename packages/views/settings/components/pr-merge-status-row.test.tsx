@@ -62,17 +62,17 @@ beforeEach(() => {
   vi.clearAllMocks();
   workspaceRef.current = { id: "workspace-1", settings: {} };
   catalogRef.current = [
-    status("in_review", "In Review", "started"),
+    status("in_review", "Resolved", "started"),
     status("blocked", "Blocked", "started"),
     status("qa", "QA", "started"),
-    status("done", "Done", "done"),
+    status("done", "Closed", "done"),
   ];
 });
 
 describe("PRMergeStatusRow", () => {
-  it("moves issues to Done by default and shows no change when turned off", () => {
+  it("moves issues to Closed by default and shows no change when turned off", () => {
     render(<PRMergeStatusRow canManage />, { wrapper: Wrapper });
-    expect(select()).toHaveTextContent("Done");
+    expect(select()).toHaveTextContent("Closed");
 
     cleanup();
     workspaceRef.current.settings = { pr_merge_status: "none" };

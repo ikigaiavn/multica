@@ -2150,7 +2150,7 @@ describe("IssueDetail (shared)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/from In Review to Awaiting Response/i),
+        screen.getByText(/from Resolved to Awaiting Response/i),
       ).toBeInTheDocument();
     });
     expect(statusChangeIcon("Awaiting Response").style.color).toBe("rgb(255, 0, 0)");
@@ -2174,9 +2174,9 @@ describe("IssueDetail (shared)", () => {
     renderIssueDetailWithStatusCatalog([IN_REVIEW_BUILT_IN, AWAITING_RESPONSE]);
 
     await waitFor(() => {
-      expect(screen.getByText(/from In Progress to In Review/i)).toBeInTheDocument();
+      expect(screen.getByText(/from In Progress to Resolved/i)).toBeInTheDocument();
     });
-    const icon = statusChangeIcon("In Review");
+    const icon = statusChangeIcon("Resolved");
     expect(icon.style.color).toBe("");
     expect(icon.getAttribute("class")).toContain("text-success");
   });
@@ -2212,7 +2212,7 @@ describe("IssueDetail (shared)", () => {
 
     // Only the 8 most recent entries (act-3..act-10) are rendered by default.
     // act-1 and act-2 are folded behind the show-more line.
-    expect(screen.getByText(/from In Progress to In Review/i)).toBeInTheDocument(); // act-3
+    expect(screen.getByText(/from In Progress to Resolved/i)).toBeInTheDocument(); // act-3
     expect(screen.getByText(/set due date to/i)).toBeInTheDocument(); // act-10
     expect(screen.queryByText(/from Todo to In Progress/i)).not.toBeInTheDocument(); // act-1
     expect(screen.queryByText(/from Low to Medium/i)).not.toBeInTheDocument(); // act-2
@@ -2251,11 +2251,11 @@ describe("IssueDetail (shared)", () => {
     // exactly within the limit, so no "Show N more activities" line appears.
     expect(screen.getByText(/from Todo to In Progress/i)).toBeInTheDocument();
     expect(screen.getByText(/from Low to High/i)).toBeInTheDocument();
-    expect(screen.getByText(/from In Progress to In Review/i)).toBeInTheDocument();
+    expect(screen.getByText(/from In Progress to Resolved/i)).toBeInTheDocument();
     expect(screen.getByText(/from High to Urgent/i)).toBeInTheDocument();
-    expect(screen.getByText(/from In Review to Done/i)).toBeInTheDocument();
+    expect(screen.getByText(/from Resolved to Closed/i)).toBeInTheDocument();
     expect(screen.getByText(/from Urgent to Low/i)).toBeInTheDocument();
-    expect(screen.getByText(/from Done to Blocked/i)).toBeInTheDocument();
+    expect(screen.getByText(/from Closed to Blocked/i)).toBeInTheDocument();
     expect(screen.getByText(/set due date to/i)).toBeInTheDocument();
     expect(screen.queryByText(/Show \d+ more activit/i)).not.toBeInTheDocument();
   });
@@ -2306,11 +2306,11 @@ describe("IssueDetail (shared)", () => {
     expect(screen.getByText(/from No priority to Low/i)).toBeInTheDocument();
     expect(screen.getByText(/from Todo to In Progress/i)).toBeInTheDocument();
     expect(screen.getByText(/from Low to Medium/i)).toBeInTheDocument();
-    expect(screen.getByText(/from In Progress to In Review/i)).toBeInTheDocument();
+    expect(screen.getByText(/from In Progress to Resolved/i)).toBeInTheDocument();
     expect(screen.getByText(/from Medium to High/i)).toBeInTheDocument();
-    expect(screen.getByText(/from In Review to Done/i)).toBeInTheDocument();
+    expect(screen.getByText(/from Resolved to Closed/i)).toBeInTheDocument();
     expect(screen.getByText(/from High to Urgent/i)).toBeInTheDocument();
-    expect(screen.getByText(/from Done to Blocked/i)).toBeInTheDocument();
+    expect(screen.getByText(/from Closed to Blocked/i)).toBeInTheDocument();
     expect(screen.getByText(/from Urgent to Low/i)).toBeInTheDocument();
     expect(screen.queryByText(/Show \d+ more activit/i)).not.toBeInTheDocument();
   });

@@ -60,8 +60,8 @@
     "category_labels": {
       "unstarted": "Unstarted",
       "started": "Started",
-      "done": "Done",
-      "closed": "Closed"
+      "done": "Closed",
+      "closed": "Cancelled"
     },
     "categories": {
       "unstarted": "Work that has not started, whether planned or in the backlog.",
@@ -73,9 +73,9 @@
       "backlog": "Parked. Assigning an issue here never starts an agent run.",
       "todo": "Queued. Moving an issue here starts the assigned agent.",
       "in_progress": "Actively being worked on.",
-      "in_review": "Delivered, waiting on human review. Finalizes the autopilot run.",
+      "in_review": "Resolved, waiting on human confirmation. Finalizes the autopilot run.",
       "blocked": "Stalled on an external dependency.",
-      "done": "Completed.",
+      "done": "Closed.",
       "cancelled": "Decided not to do."
     },
     "pr_auto_complete_badge": "Set when PRs merge",

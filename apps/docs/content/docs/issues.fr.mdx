@@ -46,7 +46,7 @@ Chaque espace de travail démarre avec sept statuts intégrés, regroupés en qu
 |---|---|---|
 | `unstarted` (Non démarré) | `backlog`, `todo` | Travail non démarré, qu'il soit planifié ou reporté. |
 | `started` (Démarrage) | `in_progress`, `in_review`, `blocked` | Le travail a commencé, attend une relecture ou ne peut pas continuer pour l'instant. |
-| `done` (Terminé) | `done` | Terminé avec succès ; état final. |
+| `done` (Fermé) | `done` | Terminé avec succès ; état final. |
 | `closed` (Fermée) | `cancelled` | Abandonné ; état final, sans aboutissement réussi. |
 
 Les catégories simplifient le raisonnement sur le cycle de vie. Les tableaux, les listes, les filtres et les tris s'appuient tous sur le statut individuel, et les statuts concrets préservent le comportement de workflow plus spécifique sur lequel reposent les agents et les automatisations.
@@ -56,8 +56,8 @@ Les catégories simplifient le raisonnement sur le cycle de vie. Les tableaux, l
 | `backlog` (À planifier) | Pas encore à démarrer. Une tâche assignée à un agent ne crée une exécution qu'après avoir quitté `backlog`. |
 | `todo` (À faire) | Cadrée et en attente de démarrage. |
 | `in_progress` (En cours) | En cours de traitement. |
-| `in_review` (En relecture) | Un résultat attend une relecture. |
-| `done` (Terminé) | Terminée. |
+| `in_review` (Résolu) | Un résultat attend une relecture. |
+| `done` (Fermé) | Terminée. |
 | `blocked` (Bloqué) | Ne peut pas continuer pour l'instant. |
 | `cancelled` (Annulé) | Abandonnée ; l'historique est conservé. |
 

@@ -85,7 +85,7 @@ describe("StatusPicker trigger color", () => {
     );
 
     const trigger = iconOf(container);
-    const row = iconOf(optionRow("In Review"));
+    const row = iconOf(optionRow("Resolved"));
 
     // No inline color on either: an inline color is precisely what overrides
     // the token and produces the two-greens mismatch.
