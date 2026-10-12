@@ -4,10 +4,7 @@ import {
 } from "@multica/core/i18n";
 
 export {
-  INSTALL_RUNTIME_ISSUE_TITLE,
-  INSTALL_RUNTIME_ISSUE_BODY,
-} from "./install-runtime-issue";
-export {
+  MIKA_PLACEHOLDER_EMOJI,
   getMikaOnboarding,
   type MikaContentLang,
   type MikaOnboardingDefinition,
