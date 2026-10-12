@@ -4159,6 +4159,14 @@ export class ApiClient {
     });
   }
 
+  /** Brings an archived built-in Blocked back; the only restorable status. */
+  async restoreIssueStatus(id: string): Promise<IssueStatusEntry> {
+    const raw = await this.fetch<unknown>(`/api/issue-statuses/${id}/restore`, { method: "POST" });
+    return parseWithFallback(raw, IssueStatusEntrySchema, EMPTY_ISSUE_STATUS_ENTRY, {
+      endpoint: "POST /api/issue-statuses/{id}/restore",
+    });
+  }
+
   // Custom issue properties
   async listProperties(includeArchived = false): Promise<ListPropertiesResponse> {
     const suffix = includeArchived ? "?include_archived=true" : "";

@@ -15,5 +15,6 @@ export {
   useCreateIssueStatus,
   useUpdateIssueStatus,
   useArchiveIssueStatus,
+  useRestoreIssueStatus,
   useReorderIssueStatuses,
 } from "./mutations";

@@ -62,6 +62,24 @@ const BUILT_INS: IssueStatusEntry[] = (
 );
 
 describe("useStatusOptions", () => {
+  // Blocked is the one built-in a workspace may archive; once it does, the
+  // picker and filter stop offering it like any archived custom status.
+  it("drops an archived Blocked from the options", () => {
+    catalogEntries = BUILT_INS.map((e) =>
+      e.key === "blocked" ? { ...e, archived_at: "2026-10-12T00:00:00Z" } : e,
+    );
+    const { result } = renderHook(() => useStatusOptions("workspace-1"));
+
+    expect(result.current.map((o) => o.key)).toEqual([
+      "backlog",
+      "todo",
+      "in_progress",
+      "in_review",
+      "done",
+      "cancelled",
+    ]);
+  });
+
   // A cold render must offer the same 7 statuses it always did, or the picker
   // opens empty on first paint and on any workspace whose catalog fetch failed.
   it("offers the 7 built-ins when the catalog has not loaded", () => {

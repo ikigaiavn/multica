@@ -14,6 +14,7 @@ const reorderMutate = vi.hoisted(() => vi.fn());
 const createMutate = vi.hoisted(() => vi.fn());
 const updateMutate = vi.hoisted(() => vi.fn());
 const archiveMutate = vi.hoisted(() => vi.fn());
+const restoreMutate = vi.hoisted(() => vi.fn());
 const navigatePush = vi.hoisted(() => vi.fn());
 const updateWorkspace = vi.hoisted(() => vi.fn());
 let workspaceSettings: Record<string, unknown> = {};
@@ -67,6 +68,7 @@ vi.mock("@multica/core/issue-statuses/mutations", () => ({
   useCreateIssueStatus: () => ({ mutate: createMutate, isPending: false }),
   useUpdateIssueStatus: () => ({ mutate: updateMutate, isPending: false }),
   useArchiveIssueStatus: () => ({ mutate: archiveMutate, isPending: false }),
+  useRestoreIssueStatus: () => ({ mutate: restoreMutate, isPending: false }),
   useReorderIssueStatuses: () => ({ mutate: reorderMutate }),
 }));
 vi.mock("../../issues/utils/status-label", () => ({
@@ -121,6 +123,7 @@ afterEach(() => {
   createMutate.mockClear();
   updateMutate.mockClear();
   archiveMutate.mockReset();
+  restoreMutate.mockReset();
   navigatePush.mockClear();
   updateWorkspace.mockReset();
   workspaceSettings = {};
@@ -464,5 +467,35 @@ describe("IssueStatusesTab", () => {
     await user.click(edit);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("lets admins archive the built-in Blocked, and only Blocked", async () => {
+    const user = userEvent.setup();
+    const blocked = entry({ id: "blocked", key: "blocked", name: "Blocked", is_system: true, position: 2 });
+    catalog = [BUILT_IN_IN_REVIEW, blocked];
+    render(<IssueStatusesTab />);
+    await user.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "blocked")));
+    const archive = await screen.findByRole("menuitem", { name: en.issue_statuses.actions.archive });
+    expect(archive).not.toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("menuitem", { name: en.issue_statuses.actions.edit })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText(en.issue_statuses.built_in_blocked_locked)).toBeInTheDocument();
+    await user.click(archive);
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("offers Restore on an archived Blocked and nowhere else", async () => {
+    const user = userEvent.setup();
+    const blocked = entry({ id: "blocked", key: "blocked", name: "Blocked", is_system: true, position: 2, archived_at: "2026-10-12T00:00:00Z" });
+    const oldCustom = entry({ id: "old", key: "old", name: "Old", position: 3, archived_at: "2026-10-12T00:00:00Z" });
+    catalog = [BUILT_IN_IN_REVIEW, blocked, oldCustom];
+    render(<IssueStatusesTab />);
+    const toggle = archivedToggle();
+    expect(toggle).not.toBeNull();
+    expect(toggle!.closest("label")!.textContent).toContain("(2)");
+    await user.click(toggle!);
+    const restore = screen.getAllByRole("button", { name: en.issue_statuses.actions.restore });
+    expect(restore).toHaveLength(1);
+    await user.click(restore[0]!);
+    expect(restoreMutate).toHaveBeenCalledWith("blocked", expect.anything());
   });
 });

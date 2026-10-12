@@ -13,7 +13,8 @@
       "open": "{{name}} 的操作",
       "edit": "编辑",
       "archive": "归档",
-      "reorder": "拖动排序 {{name}}"
+      "reorder": "拖动排序 {{name}}",
+      "restore": "恢复"
     },
     "reorder_hint": "在分类内拖动排序，同步用于看板、列表和菜单。",
     "built_in_dialog": {},
@@ -79,7 +80,9 @@
       "cancelled": "决定不做。"
     },
     "pr_auto_complete_badge": "PR 合并后自动进入",
-    "built_in_locked": "内置状态驱动系统行为，不能编辑或归档，但可以调整顺序。"
+    "built_in_locked": "内置状态驱动系统行为，不能编辑或归档，但可以调整顺序。",
+    "built_in_blocked_locked": "内置状态不能编辑。已阻塞是唯一可以归档的内置状态，团队不使用时可以归档。",
+    "restore_failed": "恢复失败。"
   },
   "wakeups": {
     "description": "平台对所有任务生效的规则。每个任务可以在自己的「唤醒」区域单独修改。",

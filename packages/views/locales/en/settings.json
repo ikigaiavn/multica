@@ -13,7 +13,8 @@
       "open": "Actions for {{name}}",
       "edit": "Edit",
       "archive": "Archive",
-      "reorder": "Reorder {{name}}"
+      "reorder": "Reorder {{name}}",
+      "restore": "Restore"
     },
     "reorder_hint": "Drag within a category to reorder boards, lists, and menus.",
     "built_in_dialog": {},
@@ -79,7 +80,9 @@
       "cancelled": "Decided not to do."
     },
     "pr_auto_complete_badge": "Set when PRs merge",
-    "built_in_locked": "Built-in statuses drive system behavior, so they can't be edited or archived. You can still reorder them."
+    "built_in_locked": "Built-in statuses drive system behavior, so they can't be edited or archived. You can still reorder them.",
+    "built_in_blocked_locked": "Built-in statuses can't be edited. Blocked is the one you can archive if your team doesn't use it.",
+    "restore_failed": "Could not restore the status."
   },
   "wakeups": {
     "description": "Platform rules that apply to every issue. Each issue can change them in its Wakeups section.",

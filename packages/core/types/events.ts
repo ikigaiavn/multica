@@ -157,7 +157,7 @@ export interface PropertyChangedPayload {
 /**
  * The workspace issue status catalog changed (MUL-6243).
  *
- * One event covers all four writes because clients answer them the same way:
+ * One event covers every catalog write because clients answer them the same way:
  * re-read the catalog. It deliberately carries no entry — merging a row out of
  * an event would have to be reconciled against writes this client never saw,
  * and the catalog is small enough that a refetch is both simpler and safer.
@@ -167,7 +167,7 @@ export interface PropertyChangedPayload {
  * refreshes the catalog correctly.
  */
 export interface IssueStatusChangedPayload {
-  action?: "created" | "updated" | "archived" | "reordered";
+  action?: "created" | "updated" | "archived" | "restored" | "reordered";
 }
 
 export interface AgentStatusPayload {

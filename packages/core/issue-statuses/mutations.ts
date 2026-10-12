@@ -32,8 +32,10 @@ import type {
  *
  * - an optimistic field patch (rename, recolor, reorder),
  * - an insert of a row nobody else can have seen yet (create),
- * - a monotonic flag (archive — there is no unarchive endpoint, and the server
- *   refuses to edit an archived row, so setting it can never be stale).
+ * - an archive flag. It is monotonic for custom statuses (no unarchive, and the
+ *   server refuses to edit an archived row); the built-in Blocked can be
+ *   restored, and restore invalidates instead of patching, so a stale flag is
+ *   corrected by the same refetch.
  *
  * On FAILURE the invalidate stays, and it is not symmetry for its own sake: a
  * 409 usually means this client's catalog is the stale thing — someone else
@@ -142,9 +144,9 @@ export function useUpdateIssueStatus() {
 }
 
 /**
- * Archives a custom status. Deliberately NOT optimistic: the server refuses to
- * archive a built-in, and a row silently vanishing before that refusal arrives
- * would read as success.
+ * Archives a custom status or the built-in Blocked. Deliberately NOT
+ * optimistic: the server refuses to archive any other built-in, and a row
+ * silently vanishing before that refusal arrives would read as success.
  */
 export function useArchiveIssueStatus() {
   const { patchEntry, invalidate } = useCatalogCache();
@@ -163,6 +165,19 @@ export function useArchiveIssueStatus() {
       patchEntry(entry.id, { archived_at: entry.archived_at });
     },
     onError: invalidate,
+  });
+}
+
+/**
+ * Restores an archived Blocked. Invalidates rather than patching: unlike
+ * archive, restore makes the flag non-monotonic, so the catalog is re-read
+ * instead of trusting a local write that a concurrent archive could outdate.
+ */
+export function useRestoreIssueStatus() {
+  const { invalidate } = useCatalogCache();
+  return useMutation({
+    mutationFn: (id: string) => api.restoreIssueStatus(id),
+    onSettled: invalidate,
   });
 }
 
