@@ -28,9 +28,9 @@ These have sensible defaults and only need to be set when tuning a large or cons
 
 Budget the sum of primary and replica pool limits across every API pod against the PostgreSQL cluster connection ceiling. The replica pool defaults to a five-minute connection lifetime (overridable with the `pool_max_conn_lifetime` URL parameter) so read-only validation is refreshed after promotion. Replica configuration is non-critical: invalid configuration or runtime connection failure makes explicitly opted-in reads fall back to primary, with a short passive circuit preventing every request from paying the connection timeout. Existing read paths remain primary-only until migrated individually. Replica reads have no application-enforced staleness bound; monitor replication lag in the database layer and keep consistency-sensitive reads on primary.
 
-### Email (Required for Authentication)
+### Email (Optional)
 
-Multica supports two email backends. `SMTP_HOST` takes priority when set; otherwise `RESEND_API_KEY` is used. With neither configured, verification codes are printed to the server log — copy them from there to log in.
+Email is used for invitations and notifications, not for sign-in. Multica supports two email backends. `SMTP_HOST` takes priority when set; otherwise `RESEND_API_KEY` is used. With neither configured, outgoing emails are printed to the server log.
 
 #### Option A: Resend (recommended for cloud deployments)
 
@@ -55,9 +55,11 @@ Use this option when your deployment cannot reach the public internet or you alr
 
 STARTTLS is used automatically when advertised by the server. Port 465 (SMTPS / implicit TLS) is supported and auto-enables implicit TLS; set `SMTP_TLS=implicit` (aliases `smtps`, `ssl`) to force it on a non-standard port.
 
-> **Note:** If neither Resend nor SMTP is configured, generated verification codes are printed to backend logs — copy them from there to log in. A fixed local testing code (e.g. `888888`) is **opt-in only**: set `MULTICA_DEV_VERIFICATION_CODE=888888` in `.env` and keep `APP_ENV` non-production. The Docker self-host stack pins `APP_ENV=production`, so the shortcut is ignored there. **Never enable a fixed code on a publicly reachable instance.**
+> **Note:** Email code login is closed. Setting `MULTICA_DEV_VERIFICATION_CODE` to a six-digit code with a non-production `APP_ENV` reopens `/auth/send-code` and `/auth/verify-code` for automation (local `make up`, E2E). The Docker self-host stack pins `APP_ENV=production`, so that is ignored there. **Never enable it on a publicly reachable instance.**
 
-### Google OAuth (Optional)
+### Google OAuth (Required for Sign-in)
+
+Google is the only sign-in method for web, desktop, the CLI and mobile. Create a Google OAuth client of type **Web application** and add `<frontend origin>/auth/callback` as an authorized redirect URI. Desktop and mobile open that same web page in a browser and receive the session through the `multica://auth/callback` deep link, so they need no OAuth clients of their own.
 
 | Variable | Description |
 |----------|-------------|

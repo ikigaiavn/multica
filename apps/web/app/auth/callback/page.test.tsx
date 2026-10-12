@@ -453,6 +453,41 @@ describe("CallbackPage", () => {
     }
   });
 
+  it("hands the token to the mobile app when state contains platform:mobile", async () => {
+    const { api: mockedApi } = await import("@multica/core/api");
+    const mockGoogleLogin = mockedApi.googleLogin as ReturnType<typeof vi.fn>;
+
+    const hrefSetter = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: { ...originalLocation, set href(value: string) { hrefSetter(value); } },
+    });
+
+    try {
+      mockSearchParams.set("state", "platform:mobile");
+      mockGoogleLogin.mockResolvedValue({ token: "mobile-jwt" });
+
+      renderCallback();
+
+      await waitFor(() => {
+        expect(hrefSetter).toHaveBeenCalledWith(
+          "multica://auth/callback?token=mobile-jwt",
+        );
+      });
+      expect(mockLoginWithGoogle).not.toHaveBeenCalled();
+      expect(
+        await screen.findByRole("button", { name: "Open Multica app" }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    }
+  });
+
   it("onboarded users with missing source land in the workspace; the source-backfill modal is mounted there", async () => {
     // Source attribution backfill is now an in-workspace modal — see
     // `<SourceBackfillModal />` mounted inside `DashboardLayout`. The

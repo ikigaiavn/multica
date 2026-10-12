@@ -21,11 +21,13 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardContent,
 } from "@multica/ui/components/ui/card";
-import { Button } from "@multica/ui/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { setLoggedInCookie } from "@/features/auth/auth-cookie";
+import {
+  AppHandoffCard,
+  appCallbackUrl,
+  parseAppPlatform,
+} from "@/features/auth/app-handoff";
 import Link from "next/link";
 import { LoginPage, validateCliCallback } from "@multica/views/auth";
 import { useT } from "@multica/views/i18n";
@@ -61,6 +63,7 @@ function LoginPageContent() {
   const qc = useQueryClient();
   const { t } = useT("auth");
   const googleClientId = useConfigStore((state) => state.googleClientId);
+  const authConfigLoaded = useConfigStore((state) => state.authConfigLoaded);
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
   const searchParams = useSearchParams();
@@ -68,7 +71,10 @@ function LoginPageContent() {
   const cliCallbackRaw = searchParams.get("cli_callback");
   const cliState = searchParams.get("cli_state") || "";
   const platform = searchParams.get("platform");
-  const isDesktopHandoff = platform === "desktop" && !cliCallbackRaw;
+  // Native apps (Electron desktop, Expo mobile) open this page in a browser
+  // and receive the token back through the `multica://auth/callback` deep link.
+  const appPlatform = parseAppPlatform(platform);
+  const appHandoff = cliCallbackRaw ? null : appPlatform;
   // `next` carries a protected URL the user was originally headed to
   // (e.g. /invite/{id}). With URL-driven workspaces there is no legacy
   // "/issues" default — if `next` is absent we decide after login based on
@@ -76,8 +82,8 @@ function LoginPageContent() {
   // cannot bounce the user off-origin after a successful login.
   const nextUrl = sanitizeNextUrl(searchParams.get("next"));
 
-  const [desktopToken, setDesktopToken] = useState<string | null>(null);
-  const [desktopError, setDesktopError] = useState("");
+  const [appToken, setAppToken] = useState<string | null>(null);
+  const [handoffError, setHandoffError] = useState("");
   const hasOnboarded = useHasOnboarded();
 
   // Latched once auth has been observed settled as logged-out on this page.
@@ -95,30 +101,30 @@ function LoginPageContent() {
       return;
     }
     if (cliCallbackRaw) return;
-    if (isDesktopHandoff) {
-      // Desktop opened the browser for login but the web session is already
+    if (appHandoff) {
+      // A native app opened the browser for login but the web session is already
       // authenticated — mint a bearer token from the cookie session and hand
       // it off via deep link instead of silently redirecting to the workspace.
       api
         .issueCliToken()
         .then(({ token }) => {
-          setDesktopToken(token);
-          window.location.href = `multica://auth/callback?token=${encodeURIComponent(token)}`;
+          setAppToken(token);
+          window.location.href = appCallbackUrl(token);
         })
         .catch((err) => {
-          setDesktopError(
+          setHandoffError(
             err instanceof Error
               ? err.message
-              : t(($) => $.web.desktop_handoff.prepare_failed),
+              : appHandoff === "mobile"
+                ? t(($) => $.web.mobile_handoff.prepare_failed)
+                : t(($) => $.web.desktop_handoff.prepare_failed),
           );
         });
       return;
     }
-    // Fresh form login (issue #5009): `user` was written by verifyCode while
-    // handleVerify was still fetching the workspace list, so this effect used
-    // to read the not-yet-seeded list cache and race handleSuccess with a
-    // replace to /workspaces/new. handleSuccess owns post-login navigation;
-    // this effect only serves visitors who arrived already authenticated.
+    // This effect only serves visitors who arrived already authenticated; a
+    // sign-in started here finishes on /auth/callback, which owns its own
+    // post-login navigation.
     if (settledLoggedOutRef.current) return;
     if (nextUrl) {
       router.replace(nextUrl);
@@ -134,20 +140,7 @@ function LoginPageContent() {
       .catch(() => [] as Workspace[])
       .then((list) => resolveLoggedInDestination(qc, hasOnboarded, list))
       .then((dest) => router.replace(dest));
-  }, [isLoading, user, router, nextUrl, cliCallbackRaw, isDesktopHandoff, hasOnboarded, qc]);
-
-  const handleSuccess = async () => {
-    // Read the latest user snapshot directly — the closure's `hasOnboarded`
-    // was captured before login completed and would be stale here.
-    const currentUser = useAuthStore.getState().user;
-    const onboarded = currentUser?.onboarded_at != null;
-    if (nextUrl) {
-      router.push(nextUrl);
-      return;
-    }
-    const list = qc.getQueryData<Workspace[]>(workspaceKeys.list()) ?? [];
-    router.push(await resolveLoggedInDestination(qc, onboarded, list));
-  };
+  }, [isLoading, user, router, nextUrl, cliCallbackRaw, appHandoff, hasOnboarded, qc]);
 
   // Build Google OAuth state: encode platform, next URL, and CLI callback
   // params so the callback can redirect to the right place after login.
@@ -155,7 +148,7 @@ function LoginPageContent() {
   // post-login callback page can redirect the JWT back to the CLI's local
   // HTTP listener (critical for headless / WSL2 environments).
   const googleState = [
-    platform === "desktop" ? "platform:desktop" : "",
+    appPlatform ? `platform:${appPlatform}` : "",
     nextUrl ? `next:${nextUrl}` : "",
     cliCallbackRaw && validateCliCallback(cliCallbackRaw)
       ? `cli_callback:${encodeURIComponent(cliCallbackRaw)}`
@@ -165,11 +158,11 @@ function LoginPageContent() {
     .filter(Boolean)
     .join(",") || undefined;
 
-  // While the desktop handoff is in progress (or has produced a token/error),
+  // While the app handoff is in progress (or has produced a token/error),
   // render a dedicated screen instead of flashing the login form or redirecting
   // away to a workspace page.
-  if (isDesktopHandoff && user) {
-    if (desktopError) {
+  if (appHandoff && user) {
+    if (handoffError) {
       return (
         <div className="flex min-h-screen items-center justify-center">
           <Card className="w-full max-w-sm">
@@ -177,47 +170,17 @@ function LoginPageContent() {
               <CardTitle className="text-display-sm">
                 {t(($) => $.web.desktop_handoff.failed_title)}
               </CardTitle>
-              <CardDescription>{desktopError}</CardDescription>
+              <CardDescription>{handoffError}</CardDescription>
             </CardHeader>
           </Card>
         </div>
       );
     }
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-display-sm">
-              {t(($) => $.web.desktop_handoff.opening_title)}
-            </CardTitle>
-            <CardDescription>
-              {desktopToken
-                ? t(($) => $.web.desktop_handoff.opening_description)
-                : t(($) => $.web.desktop_handoff.preparing)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            {desktopToken ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  window.location.href = `multica://auth/callback?token=${encodeURIComponent(desktopToken)}`;
-                }}
-              >
-                {t(($) => $.web.desktop_handoff.open_button)}
-              </Button>
-            ) : (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <AppHandoffCard platform={appHandoff} token={appToken} />;
   }
 
   return (
     <LoginPage
-      onSuccess={handleSuccess}
       google={
         googleClientId
           ? {
@@ -232,6 +195,7 @@ function LoginPageContent() {
           ? { url: cliCallbackRaw, state: cliState }
           : undefined
       }
+      googleUnavailable={authConfigLoaded && !googleClientId}
       onTokenObtained={setLoggedInCookie}
       extra={
         <span className="text-caption text-muted-foreground">

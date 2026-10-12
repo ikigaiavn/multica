@@ -42,6 +42,9 @@ const (
 )
 
 func TestMain(m *testing.M) {
+	// Email code login is closed unless a dev code is configured; the suites
+	// below drive it as their login fixture.
+	os.Setenv("MULTICA_DEV_VERIFICATION_CODE", "888888")
 	ctx := context.Background()
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {

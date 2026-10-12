@@ -37,8 +37,6 @@ const {
   searchParamsState: { params: new URLSearchParams() },
   authStateRef: {
     state: {
-      sendCode: vi.fn(),
-      verifyCode: vi.fn(),
       user: null as null | { id: string; email: string; onboarded_at?: string | null },
       isLoading: false,
     },
@@ -53,8 +51,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => searchParamsState.params,
 }));
 
-// Mock auth store — shared LoginPage uses getState().sendCode/verifyCode,
-// web wrapper uses useAuthStore((s) => s.user/isLoading). Keep the real
+// Mock auth store — the web wrapper uses useAuthStore((s) => s.user/isLoading). Keep the real
 // sanitizeNextUrl so the redirect-sanitization rules are exercised rather
 // than silently drifting behind a mock reimplementation.
 vi.mock("@multica/core/auth", async () => {
@@ -80,13 +77,13 @@ vi.mock("@multica/core/api", () => ({
   api: {
     listWorkspaces: mockListWorkspaces,
     listMyInvitations: mockListMyInvitations,
-    verifyCode: vi.fn(),
     setToken: vi.fn(),
     getMe: vi.fn(),
     issueCliToken: mockIssueCliToken,
   },
 }));
 
+import { configStore } from "@multica/core/config";
 import LoginPage from "./page";
 
 describe("LoginPage", () => {
@@ -143,12 +140,54 @@ describe("LoginPage", () => {
     }
   });
 
-  // Regression: #5009 — the "already authenticated on arrival" effect used to
-  // fire for fresh form logins too. verifyCode writes `user` while handleVerify
-  // is still fetching the workspace list, so the effect read an empty cache and
-  // raced handleSuccess with replace("/workspaces/new"); depending on the
-  // interleaving the user could end up stuck on the create-workspace page
-  // despite having workspaces.
+  it("deep-links to the mobile app when already logged in with platform=mobile", async () => {
+    searchParamsState.params = new URLSearchParams({ platform: "mobile" });
+    authStateRef.state.user = { id: "u1", email: "test@multica.ai" };
+    mockIssueCliToken.mockResolvedValue({ token: "mobile-jwt" });
+
+    const hrefSetter = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, set href(value: string) { hrefSetter(value); } },
+    });
+
+    try {
+      render(<LoginPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(hrefSetter).toHaveBeenCalledWith(
+          "multica://auth/callback?token=mobile-jwt",
+        );
+      });
+      expect(
+        await screen.findByRole("button", { name: "Open Multica app" }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    }
+  });
+
+  it("tells the operator once the server reports no Google client", async () => {
+    configStore.getState().setAuthConfig({ allowSignup: true, googleClientId: "" });
+    try {
+      render(<LoginPage />, { wrapper: createWrapper() });
+      expect(await screen.findByText(/GOOGLE_CLIENT_ID/)).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /continue with google/i }),
+      ).not.toBeInTheDocument();
+    } finally {
+      configStore.setState({ authConfigLoaded: false });
+    }
+  });
+
+  // Regression: #5009 — the "already authenticated on arrival" effect must
+  // only serve visitors who were signed in when they landed. A `user` that
+  // appears after auth settled as logged-out must not trigger a redirect
+  // racing whoever owns that sign-in's navigation.
   describe("post-login redirect ownership (#5009)", () => {
     const onboardedUser = {
       id: "u1",
@@ -156,14 +195,13 @@ describe("LoginPage", () => {
       onboarded_at: "2026-01-01T00:00:00Z",
     };
 
-    it("does not redirect from the arrival effect when the user logs in via the form", async () => {
+    it("does not redirect from the arrival effect when the user signs in after arrival", async () => {
       // Auth settles as logged-out first — the page latches "any user from
-      // now on came from the form".
+      // now on signed in during this visit".
       const wrapper = createWrapper();
       const { rerender } = render(<LoginPage />, { wrapper });
-      // verifyCode set the user; the workspace list fetch is still in flight
-      // (cache cold). The arrival effect must stay silent — handleSuccess
-      // owns this navigation.
+      // A user appears with a cold workspace cache. The arrival effect must
+      // stay silent rather than misroute to /workspaces/new.
       authStateRef.state.user = onboardedUser;
       rerender(<LoginPage />);
 

@@ -69,7 +69,10 @@ export class TestApiClient {
         body: JSON.stringify({ email }),
       });
       if (!sendRes.ok) {
-        throw new Error(`send-code failed: ${sendRes.status}`);
+        throw new Error(
+          `send-code failed: ${sendRes.status}. E2E signs in through the email-code ` +
+            "back door, which needs MULTICA_DEV_VERIFICATION_CODE set and APP_ENV non-production.",
+        );
       }
 
       // Step 2: Read code from database
