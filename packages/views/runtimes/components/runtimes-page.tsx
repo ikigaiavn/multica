@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { useAuthStore } from "@multica/core/auth";
 import { useWorkspaceId } from "@multica/core/hooks";
 import { memberNeedsMikaSetup, useBootstrapMika } from "@multica/core/onboarding";
-import { MIKA_PLACEHOLDER_EMOJI } from "../../onboarding/components/mika-intro";
 import { useRequiredWorkspaceSlug, useWorkspacePaths } from "@multica/core/paths";
 import { agentTaskSnapshotOptions } from "@multica/core/agents";
 import { chatSessionsOptions } from "@multica/core/chat/queries";
@@ -45,6 +44,7 @@ import { PAGE_GUTTER, PAGE_RAIL, PageHeader } from "../../layout/page-header";
 import { cn } from "@multica/ui/lib/utils";
 import { AppLink, useNavigation } from "../../navigation";
 import {
+  MIKA_PLACEHOLDER_EMOJI,
   getMikaOnboarding,
   pickContentLang,
 } from "../../onboarding/templates";

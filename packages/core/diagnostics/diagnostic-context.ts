@@ -89,7 +89,6 @@ const GLOBAL_ROUTES: readonly RoutePattern[] = [
   ["workspaces", "new"],
   ["invite", ":id"],
   ["invitations"],
-  ["onboarding"],
   ["auth", "callback"],
 ];
 

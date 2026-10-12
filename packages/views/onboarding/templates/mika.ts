@@ -1,5 +1,8 @@
 import type { MikaOnboardingLanguage } from "@multica/core/onboarding";
 
+/** Shown wherever Mika has no avatar yet. */
+export const MIKA_PLACEHOLDER_EMOJI = "🦄";
+
 export type MikaContentLang = MikaOnboardingLanguage;
 
 interface LocalizedText {

@@ -136,7 +136,6 @@ describe("route coverage stays in step with paths.ts", () => {
       newWorkspace: paths.newWorkspace,
       invite: paths.invite,
       invitations: paths.invitations,
-      onboarding: paths.onboarding,
       authCallback: paths.authCallback,
       root: paths.root,
     } as Record<string, (...args: string[]) => string>;
