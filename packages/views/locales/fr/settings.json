@@ -13,7 +13,8 @@
       "open": "Actions pour {{name}}",
       "edit": "Modifier",
       "archive": "Archiver",
-      "reorder": "Réordonner {{name}}"
+      "reorder": "Réordonner {{name}}",
+      "restore": "Restaurer"
     },
     "reorder_hint": "Glissez les statuts au sein d’une catégorie pour réordonner les tableaux, listes et menus.",
     "built_in_dialog": {},
@@ -79,7 +80,9 @@
       "cancelled": "Abandonné."
     },
     "pr_auto_complete_badge": "Définie à la fusion des PR",
-    "built_in_locked": "Les états intégrés pilotent le comportement du système : ils ne peuvent être ni modifiés ni archivés, mais vous pouvez les réordonner."
+    "built_in_locked": "Les états intégrés pilotent le comportement du système : ils ne peuvent être ni modifiés ni archivés, mais vous pouvez les réordonner.",
+    "built_in_blocked_locked": "Les états intégrés ne peuvent pas être modifiés. Bloqué est le seul que vous pouvez archiver si votre équipe ne s'en sert pas.",
+    "restore_failed": "L'état n'a pas pu être restauré."
   },
   "wakeups": {
     "description": "Règles de la plateforme appliquées à chaque tâche. Chaque tâche peut les modifier dans sa section Réveils.",

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Archive,
+  ArchiveRestore,
   ArrowLeft,
   ArrowDown,
   ArrowUp,
@@ -49,6 +50,7 @@ import {
 import {
   useArchiveIssueStatus,
   useCreateIssueStatus,
+  useRestoreIssueStatus,
   useReorderIssueStatuses,
   useUpdateIssueStatus,
 } from "@multica/core/issue-statuses/mutations";
@@ -188,7 +190,8 @@ export function IssueStatusesTab() {
     [statuses, showArchived],
   );
 
-  const archivedCount = statuses.filter((s) => !s.is_system && s.archived_at).length;
+  // Custom statuses and the built-in Blocked are the only archivable rows.
+  const archivedCount = statuses.filter((s) => s.archived_at).length;
 
   const viewIssues = (status: IssueStatusEntry) => {
     setArchiveOpen(false);
@@ -443,6 +446,10 @@ function StatusRow({
   });
 
   const archived = Boolean(entry.archived_at);
+  // Blocked is the one built-in a workspace may hide, and the one archived
+  // status that can be brought back.
+  const isBlocked = entry.is_system && entry.key === "blocked";
+  const restore = useRestoreIssueStatus();
 
   return (
     <div
@@ -502,6 +509,20 @@ function StatusRow({
         )}
       </div>
       {archived && <StatusIssuesButton variant="outline" onClick={onViewIssues} />}
+      {canManage && archived && isBlocked && (
+        <Button
+          variant="outline"
+          disabled={restore.isPending}
+          onClick={() =>
+            restore.mutate(entry.id, {
+              onError: () => toast.error(t(($) => $.issue_statuses.restore_failed)),
+            })
+          }
+        >
+          <ArchiveRestore className="size-4" />
+          {t(($) => $.issue_statuses.actions.restore)}
+        </Button>
+      )}
       {canManage && !archived && (
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -533,14 +554,16 @@ function StatusRow({
               <Pencil className="size-4" />
               {t(($) => $.issue_statuses.actions.edit)}
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive" disabled={entry.is_system} onClick={onArchive}>
+            <DropdownMenuItem variant="destructive" disabled={entry.is_system && !isBlocked} onClick={onArchive}>
               <Archive className="size-4" />
               {t(($) => $.issue_statuses.actions.archive)}
             </DropdownMenuItem>
             {entry.is_system && (
               <p className="flex max-w-64 gap-1.5 px-2 pb-1 pt-1.5 text-caption leading-4 text-muted-foreground">
                 <Lock className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
-                {t(($) => $.issue_statuses.built_in_locked)}
+                {isBlocked
+                  ? t(($) => $.issue_statuses.built_in_blocked_locked)
+                  : t(($) => $.issue_statuses.built_in_locked)}
               </p>
             )}
           </DropdownMenuContent>
