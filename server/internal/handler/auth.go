@@ -477,6 +477,8 @@ func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
 		obsmetrics.RecordEvent(h.Analytics, h.Metrics, analytics.Signup(uuidToString(user.ID), user.Email, signupSourceFromRequest(r)))
 	}
 
+	user = h.loginUser(r.Context(), user, logger.RequestAttrs(r))
+
 	tokenString, err := h.issueJWT(user)
 	if err != nil {
 		if errors.Is(err, auth.ErrTemporarilyDisabledUser) {
@@ -741,6 +743,8 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 			user = updated
 		}
 	}
+
+	user = h.loginUser(r.Context(), user, logger.RequestAttrs(r))
 
 	tokenString, err := h.issueJWT(user)
 	if err != nil {
