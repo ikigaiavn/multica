@@ -45,7 +45,7 @@
   "lark_bind": {
     "page_title": "Bind your Lark account",
     "redeeming": "Redeeming binding token…",
-    "needs_auth_description": "Sign in to Multica to complete the binding. The token in the link binds your Lark account to this Multica user, so you must be logged in first.",
+    "needs_auth_description": "Sign in to ikigaia to complete the binding. The token in the link binds your Lark account to this Multica user, so you must be logged in first.",
     "sign_in": "Sign in",
     "done_title": "You're bound.",
     "done_description": "Your next message to the Bot in Lark will go straight to the Agent. You can close this tab.",
@@ -60,7 +60,7 @@
   "slack_bind": {
     "page_title": "Link your Slack account",
     "redeeming": "Linking your account…",
-    "needs_auth_description": "Sign in to Multica to complete the link. The token in the link binds your Slack account to this Multica user, so you must be logged in first.",
+    "needs_auth_description": "Sign in to ikigaia to complete the link. The token in the link binds your Slack account to this Multica user, so you must be logged in first.",
     "sign_in": "Sign in",
     "done_title": "You're linked.",
     "done_description": "Your next message to the bot in Slack will go straight to the agent. You can close this tab.",
@@ -75,7 +75,7 @@
   "dingtalk_bind": {
     "page_title": "Link your DingTalk account",
     "redeeming": "Linking your account…",
-    "needs_auth_description": "Sign in to Multica to complete the link. The token in the link binds your DingTalk account to this Multica user, so you must be logged in first.",
+    "needs_auth_description": "Sign in to ikigaia to complete the link. The token in the link binds your DingTalk account to this Multica user, so you must be logged in first.",
     "sign_in": "Sign in",
     "done_title": "You're linked.",
     "done_description": "Your next message to the bot in DingTalk will go straight to the agent. You can close this tab.",
@@ -90,7 +90,7 @@
   "telegram_bind": {
     "page_title": "Link your Telegram account",
     "redeeming": "Linking your account…",
-    "needs_auth_description": "Sign in to Multica to complete the link. The token in the link binds your Telegram account to this Multica user, so you must be logged in first.",
+    "needs_auth_description": "Sign in to ikigaia to complete the link. The token in the link binds your Telegram account to this Multica user, so you must be logged in first.",
     "sign_in": "Sign in",
     "done_title": "You're linked.",
     "done_description": "Your next message to the bot in Telegram will go straight to the agent. You can close this tab.",
@@ -109,7 +109,7 @@
   "wecom_bind": {
     "page_title": "Link your Multica account",
     "redeeming": "Linking your account…",
-    "needs_auth_description": "Sign in to Multica to complete the link. The token in the link binds your WeCom identity to this Multica user, so you must be logged in first.",
+    "needs_auth_description": "Sign in to ikigaia to complete the link. The token in the link binds your WeCom identity to this Multica user, so you must be logged in first.",
     "sign_in": "Sign in",
     "done_title": "You're linked.",
     "done_description": "Your next message to the smart bot in WeCom will go straight to the agent. You can close this tab.",
