@@ -4,7 +4,9 @@ import {
   MULTICA_LOCALE_HEADER,
   resolveLocaleFromSignals,
 } from "./lib/locale-routing";
+import { WORKSPACE_ROUTE_SEGMENTS } from "@multica/core/paths";
 import { runtimeRewriteDestination } from "./config/runtime-urls";
+import { resolveImplicitWorkspaceSlug } from "./config/implicit-workspace";
 
 // Old workspace-scoped route segments that existed before the URL refactor
 // (pre-#1131). Any URL with these as the FIRST segment is a legacy URL that
@@ -41,6 +43,57 @@ function nextWithLocale(req: NextRequest): NextResponse {
   return NextResponse.next({ request: { headers } });
 }
 
+/**
+ * Implicit workspace mode (DEFAULT_WORKSPACE_SLUG set): the browser sees
+ * slug-less URLs (`/issues/MUL-1`) while the app router still serves
+ * `app/[workspaceSlug]/...` through an internal rewrite. Slugged URLs to that
+ * workspace (old bookmarks, desktop share links, server-generated links)
+ * redirect to the slug-less form so there is one canonical address.
+ */
+function implicitWorkspaceResponse(
+  req: NextRequest,
+  slug: string,
+  hasSession: boolean,
+): NextResponse | null {
+  const { pathname } = req.nextUrl;
+  const segments = pathname.split("/").filter(Boolean);
+  const first = segments[0] ?? "";
+
+  if (pathname === "/") {
+    const url = req.nextUrl.clone();
+    url.pathname = hasSession ? "/issues" : "/login";
+    if (!hasSession) url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  if (decodeSegment(first).toLowerCase() === slug) {
+    const url = req.nextUrl.clone();
+    const rest = pathname.slice(first.length + 1);
+    url.pathname = rest && rest !== "/" ? rest : "/issues";
+    return NextResponse.redirect(url);
+  }
+
+  // `/billing/return` is the global post-checkout page, not workspace billing.
+  const isGlobalBilling = pathname === "/billing/return" || pathname.startsWith("/billing/return/");
+  if (WORKSPACE_ROUTE_SEGMENTS.has(first) && !isGlobalBilling) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${slug}${pathname}`;
+    const headers = new Headers(req.headers);
+    headers.set(MULTICA_LOCALE_HEADER, resolveLocale(req));
+    return NextResponse.rewrite(url, { request: { headers } });
+  }
+
+  return null;
+}
+
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 // Next.js 16 renamed `middleware` → `proxy`. API surface (NextRequest /
 // NextResponse / cookies / matcher) is identical; the only behavioral
 // change is the runtime — proxy is forced to nodejs and cannot opt into
@@ -56,6 +109,12 @@ export function proxy(req: NextRequest) {
 
   const hasSession = req.cookies.has("multica_logged_in");
   const lastSlug = req.cookies.get("last_workspace_slug")?.value;
+
+  const implicitSlug = resolveImplicitWorkspaceSlug(process.env);
+  if (implicitSlug) {
+    const response = implicitWorkspaceResponse(req, implicitSlug, hasSession);
+    if (response) return response;
+  }
 
   // --- Legacy URL redirect: /issues/... → /{slug}/issues/... ---
   // Old bookmarks and clients that hit us before the slug migration would

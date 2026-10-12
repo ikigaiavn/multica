@@ -1,5 +1,6 @@
 // @vitest-environment node
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect } from "vitest";
+import { configurePaths } from "@multica/core/paths";
 import { workspaceSlugFromPathname } from "./workspace-slug-from-pathname";
 
 describe("workspaceSlugFromPathname", () => {
@@ -36,5 +37,19 @@ describe("workspaceSlugFromPathname", () => {
     // comparing its own slug against these can never match.
     expect(workspaceSlugFromPathname("/login")).toBe("login");
     expect(workspaceSlugFromPathname("/workspaces/new")).toBe("workspaces");
+  });
+});
+
+describe("workspaceSlugFromPathname — implicit workspace mode", () => {
+  afterEach(() => configurePaths({ implicitWorkspaceSlug: null }));
+
+  it("attributes slug-less workspace paths to the implicit workspace", () => {
+    configurePaths({ implicitWorkspaceSlug: "acme" });
+    expect(workspaceSlugFromPathname("/issues/ACME-1")).toBe("acme");
+    expect(workspaceSlugFromPathname("/other/issues")).toBe("other");
+  });
+
+  it("returns null for slug-less paths when no implicit workspace is set", () => {
+    expect(workspaceSlugFromPathname("/issues")).toBeNull();
   });
 });

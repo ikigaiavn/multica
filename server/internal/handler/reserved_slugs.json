@@ -81,7 +81,9 @@
         "skills",
         "settings",
         "workspaces",
-        "teams"
+        "teams",
+        "chat",
+        "attachments"
       ]
     },
     {

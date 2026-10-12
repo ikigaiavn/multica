@@ -285,3 +285,55 @@ describe("proxy root and locale handling", () => {
     ).toBe("zh-Hans");
   });
 });
+
+describe("proxy implicit workspace mode", () => {
+  function withImplicitWorkspace(run: () => void) {
+    const previous = process.env.DEFAULT_WORKSPACE_SLUG;
+    process.env.DEFAULT_WORKSPACE_SLUG = "acme";
+    try {
+      withoutRuntimeUpstreams(run);
+    } finally {
+      restoreEnv("DEFAULT_WORKSPACE_SLUG", previous);
+    }
+  }
+  const session = { multica_logged_in: "1", last_workspace_slug: "other" };
+
+  it("sends root to /issues when signed in and to /login otherwise", () => {
+    withImplicitWorkspace(() => {
+      expect(redirectLocation("/", session)).toBe("https://app.multica.test/issues");
+      expect(redirectLocation("/")).toBe("https://app.multica.test/login");
+    });
+  });
+
+  it("rewrites slug-less workspace routes to the workspace segment", () => {
+    withImplicitWorkspace(() => {
+      const res = proxy(makeRequest("/issues/MUL-1?tab=a", session));
+      expect(res.headers.get("location")).toBeNull();
+      expect(res.headers.get("x-middleware-rewrite")).toBe(
+        "https://app.multica.test/acme/issues/MUL-1?tab=a",
+      );
+      expect(
+        proxy(makeRequest("/chat", session)).headers.get("x-middleware-rewrite"),
+      ).toBe("https://app.multica.test/acme/chat");
+    });
+  });
+
+  it("redirects slugged URLs of the implicit workspace to their slug-less form", () => {
+    withImplicitWorkspace(() => {
+      expect(redirectLocation("/acme/issues/MUL-1?tab=a", session)).toBe(
+        "https://app.multica.test/issues/MUL-1?tab=a",
+      );
+      expect(redirectLocation("/acme", session)).toBe("https://app.multica.test/issues");
+    });
+  });
+
+  it("leaves other workspaces and global pages alone", () => {
+    withImplicitWorkspace(() => {
+      for (const path of ["/other/issues", "/billing/return", "/login"]) {
+        const res = proxy(makeRequest(path, session));
+        expect(res.headers.get("location")).toBeNull();
+        expect(res.headers.get("x-middleware-rewrite")).toBeNull();
+      }
+    });
+  });
+});

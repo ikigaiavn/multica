@@ -2,8 +2,12 @@ export {
   paths,
   isGlobalPath,
   AGENT_FOCUS_CONVERSATION_STARTERS,
+  WORKSPACE_ROUTE_SEGMENTS,
+  configurePaths,
+  getImplicitWorkspaceSlug,
+  splitWorkspacePath,
 } from "./paths";
-export type { WorkspacePaths } from "./paths";
+export type { WorkspacePaths, WorkspacePathParts } from "./paths";
 export { RESERVED_SLUGS, isReservedSlug } from "./reserved-slugs";
 export {
   WORKSPACE_PAGES,

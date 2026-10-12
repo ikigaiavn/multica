@@ -22,8 +22,76 @@ const encode = (id: string) => encodeURIComponent(id);
  */
 export const AGENT_FOCUS_CONVERSATION_STARTERS = "conversation_starters";
 
+/**
+ * Route segments that live directly under a workspace (`/{slug}/{segment}`).
+ * Every one is a reserved slug, so a path whose first segment is in this set
+ * can never start with a workspace slug — that is what lets the implicit
+ * workspace mode below drop the slug without ambiguity.
+ */
+export const WORKSPACE_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
+  "issues",
+  "projects",
+  "autopilots",
+  "agents",
+  "members",
+  "squads",
+  "inbox",
+  "chat",
+  "my-issues",
+  "runtimes",
+  "skills",
+  "settings",
+  "usage",
+  "billing",
+  "attachments",
+]);
+
+let implicitWorkspaceSlug: string | null = null;
+
+/**
+ * Single-workspace deployments (web only) set `implicitWorkspaceSlug` so that
+ * workspace's URLs carry no slug: `/issues` instead of `/acme/issues`. Other
+ * workspaces keep their `/{slug}/...` prefix. Platforms that never call this
+ * (desktop) keep the slugged shape.
+ */
+export function configurePaths(config: { implicitWorkspaceSlug?: string | null }): void {
+  const slug = config.implicitWorkspaceSlug?.trim().toLowerCase();
+  implicitWorkspaceSlug = slug ? slug : null;
+}
+
+export function getImplicitWorkspaceSlug(): string | null {
+  return implicitWorkspaceSlug;
+}
+
+export interface WorkspacePathParts {
+  /** The workspace slug, or the implicit slug (possibly null when unset) for slug-less paths. */
+  slug: string | null;
+  /** True when the path carries no slug (`/issues/...`). */
+  implicit: boolean;
+  /** Segments after the slug: `["issues", "MUL-1"]`. */
+  rest: string[];
+}
+
+/**
+ * Split a workspace path or URL into its slug and route segments, accepting
+ * both `/{slug}/issues/...` and the slug-less `/issues/...`. Search and hash
+ * suffixes are ignored. Callers must still decide whether the path is global.
+ */
+export function splitWorkspacePath(path: string): WorkspacePathParts {
+  const pathname = path.split(/[?#]/)[0] ?? "";
+  const segments = pathname.split("/").filter(Boolean);
+  const first = segments[0];
+  if (first !== undefined && WORKSPACE_ROUTE_SEGMENTS.has(first)) {
+    return { slug: implicitWorkspaceSlug, implicit: true, rest: segments };
+  }
+  return { slug: first ?? null, implicit: false, rest: segments.slice(1) };
+}
+
 function workspaceScoped(slug: string) {
-  const ws = `/${encode(slug)}`;
+  const ws =
+    implicitWorkspaceSlug !== null && slug.toLowerCase() === implicitWorkspaceSlug
+      ? ""
+      : `/${encode(slug)}`;
   return {
     root: () => `${ws}/issues`,
     usage: () => `${ws}/usage`,

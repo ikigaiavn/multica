@@ -5,38 +5,19 @@
  * (react-markdown link component), and link-hover-card (Open button).
  */
 
-import { isGlobalPath, isReservedSlug } from "@multica/core/paths";
+import {
+  WORKSPACE_ROUTE_SEGMENTS,
+  getImplicitWorkspaceSlug,
+  isGlobalPath,
+  isReservedSlug,
+} from "@multica/core/paths";
 import { isIssueIdentifier } from "@multica/ui/markdown";
 import type { LinkClickIntent } from "../../navigation/click-intent";
 
 /**
- * Top-level workspace-scoped routes. Used to detect "/{route}/..." paths that
- * were authored without a workspace slug — we prepend the current slug so they
- * resolve correctly under the new /{slug}/{route}/... URL shape.
- *
- * Why a hardcoded allowlist: the heuristic must be conservative. A path like
- * "/acme/issues/abc" already has a slug (first segment "acme" isn't a known
- * route), so leaving it alone is correct. A path like "/foo/bar" where "foo"
- * isn't a known route is ambiguous — we don't rewrite it, treating the author
- * as intentional. Only "/issues/..." style paths get auto-prefixed.
- */
-const WORKSPACE_ROUTE_SEGMENTS = new Set([
-  "usage",
-  "issues",
-  "projects",
-  "autopilots",
-  "agents",
-  "chat",
-  "inbox",
-  "my-issues",
-  "runtimes",
-  "skills",
-  "settings",
-]);
-
-/**
  * Report whether a path is a workspace-scoped app page — `/{slug}/...` where the
- * first segment is a slug a workspace could actually own.
+ * first segment is a slug a workspace could actually own, or a slug-less
+ * `/{route}/...` (the implicit workspace mode's canonical shape).
  *
  * The app origin also serves things the app router does not own: `/api/*`,
  * `/uploads/*` (local-storage attachments, proxied by web), `/_next/*`,
@@ -54,6 +35,7 @@ function isWorkspaceScopedPath(pathname: string): boolean {
   } catch {
     return false;
   }
+  if (WORKSPACE_ROUTE_SEGMENTS.has(segment)) return true;
   return !isReservedSlug(segment.toLowerCase());
 }
 
@@ -263,8 +245,17 @@ export function openLink(
     : toInternalAppPath(href, appOrigin);
   if (internalPath) {
     let path = internalPath;
-    if (currentSlug && !isGlobalPath(path)) {
-      const firstSegment = path.split("/")[1];
+    const implicitSlug = getImplicitWorkspaceSlug();
+    const [, firstSegment, secondSegment] = path.split(/[/?#]/);
+    if (
+      implicitSlug &&
+      firstSegment?.toLowerCase() === implicitSlug &&
+      secondSegment &&
+      WORKSPACE_ROUTE_SEGMENTS.has(secondSegment)
+    ) {
+      // A slugged link to the implicit workspace — use its slug-less form.
+      path = path.slice(firstSegment.length + 1);
+    } else if (currentSlug && currentSlug !== implicitSlug && !isGlobalPath(path)) {
       if (firstSegment && WORKSPACE_ROUTE_SEGMENTS.has(firstSegment)) {
         // Path looks like /issues/abc (no slug) — prepend current slug.
         path = `/${currentSlug}${path}`;

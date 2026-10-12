@@ -42,7 +42,9 @@ vi.mock("@multica/core/workspace", () => ({
   }),
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@multica/core/paths", async (importOriginal) => ({
+  // Keep the real path parsing the layout's slug guard relies on.
+  ...(await importOriginal<typeof import("@multica/core/paths")>()),
   WorkspaceSlugProvider: ({ children }: { children: ReactNode }) => (
     <>{children}</>
   ),

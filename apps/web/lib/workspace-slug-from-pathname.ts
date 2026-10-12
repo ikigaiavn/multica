@@ -1,3 +1,5 @@
+import { splitWorkspacePath } from "@multica/core/paths";
+
 /**
  * The workspace slug the router is currently on, read from the live pathname.
  *
@@ -11,12 +13,17 @@
  * routes (`/login`, `/workspaces/new`) do return their first segment — the
  * caller is a workspace layout that only ever compares against its own slug,
  * and a reserved slug can never equal one.
+ *
+ * In the implicit workspace mode a slug-less workspace path (`/issues/...`)
+ * belongs to the implicit workspace, so its slug is returned.
  */
 export function workspaceSlugFromPathname(
   pathname: string | null | undefined,
 ): string | null {
-  const segment = pathname?.split("/").filter(Boolean)[0];
+  if (!pathname) return null;
+  const { slug: segment, implicit } = splitWorkspacePath(pathname);
   if (!segment) return null;
+  if (implicit) return segment;
   // Route params arrive decoded while the pathname segment stays encoded, so
   // a slug needing escapes would never compare equal without this. A lone `%`
   // throws rather than decoding, so fall back to the raw segment.
