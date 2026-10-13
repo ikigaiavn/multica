@@ -729,6 +729,16 @@ export const IssuePropertyValuesSchema = z.preprocess(
   z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.array(z.string())])).default({}),
 );
 
+export interface IssueDriveFolderResponse {
+  drive_folder_id: string;
+  drive_folder_url: string;
+}
+
+export const IssueDriveFolderResponseSchema = z.object({
+  drive_folder_id: z.string().min(1),
+  drive_folder_url: z.string().min(1),
+}).loose();
+
 export const IssuePropertiesResponseSchema = z.object({
   properties: IssuePropertyValuesSchema,
   issue_revision: z.number().int().positive().optional(),
@@ -757,6 +767,8 @@ export interface AppConfigResponse {
    * (self-host only; off on the managed cloud). Absent/false hides the whole
    * Settings → Integrations "Git providers" section. */
   vcs_integration_available?: boolean;
+  /** Whether the server can create Google Drive folders for issues. */
+  google_drive_enabled?: boolean;
   feature_flags?: Record<string, boolean>;
   /** Whether this server understands local_directory `execution_mode` and
    * gates worktree mode at save time. Absent on every server that predates this
@@ -1032,6 +1044,7 @@ export const AppConfigSchema = z.object({
   daemon_app_url: OptionalStringSchema,
   workspace_creation_disabled: BooleanWithDefaultSchema(false).optional(),
   vcs_integration_available: BooleanWithDefaultSchema(false).optional(),
+  google_drive_enabled: BooleanWithDefaultSchema(false).optional(),
   feature_flags: FeatureFlagsSchema,
   local_worktree_supported: BooleanWithDefaultSchema(false),
   agent_conversation_starters_supported: BooleanWithDefaultSchema(false),
@@ -1049,6 +1062,7 @@ export const EMPTY_APP_CONFIG: AppConfigResponse = {
   daemon_app_url: "",
   workspace_creation_disabled: false,
   vcs_integration_available: false,
+  google_drive_enabled: false,
   // Fail closed: an unreadable config must not look like a server that
   // validates execution_mode.
   local_worktree_supported: false,
@@ -1329,6 +1343,11 @@ export const IssueSchema = z.object({
     .optional()
     .catch(undefined),
   project_id: z.string().nullable(),
+  // Google Drive folder, present only once one exists and only on renderings
+  // that read it. Left optional (no default) so a payload without the key
+  // keeps the link a cached detail already holds.
+  drive_folder_id: z.string().optional().catch(undefined),
+  drive_folder_url: z.string().optional().catch(undefined),
   position: z.number(),
   // Older backends predate `stage`; default to null so a missing field parses
   // cleanly into the non-optional Issue.stage (number | null).
@@ -1403,6 +1422,8 @@ const ProjectSchema = z.object({
   description: z.string().nullable(),
   icon: z.string().nullable(),
   avatar_url: z.string().nullable().default(null),
+  drive_folder_id: z.string().nullable().default(null),
+  drive_folder_url: z.string().nullable().default(null),
   status: z.string(),
   priority: z.string(),
   lead_type: z.string().nullable(),

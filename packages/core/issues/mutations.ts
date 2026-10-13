@@ -1239,3 +1239,21 @@ export function useRetryIssueRun(issueId: string) {
     onSuccess: () => client.invalidateQueries({ queryKey: issueKeys.tasks(issueId) }),
   });
 }
+
+/** Creates (or returns) the issue's Google Drive folder and records the link
+ *  on the cached issue detail. Not optimistic: the folder ID only exists once
+ *  Drive has answered. */
+export function useCreateIssueDriveFolder() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+  return useMutation({
+    mutationFn: (issueId: string) => api.createIssueDriveFolder(issueId),
+    onSuccess: (folder, issueId) => {
+      qc.setQueryData<Issue>(issueKeys.detail(wsId, issueId), (prev) =>
+        prev
+          ? { ...prev, drive_folder_id: folder.drive_folder_id, drive_folder_url: folder.drive_folder_url }
+          : prev,
+      );
+    },
+  });
+}

@@ -203,6 +203,11 @@ export interface Issue {
    */
   duplicate_of?: IssueDuplicateOf | null;
   project_id: string | null;
+  // Google Drive folder for the issue's files. Present once created, and only
+  // on payloads that read it (detail, create, update); absent means "unknown",
+  // not "none".
+  drive_folder_id?: string;
+  drive_folder_url?: string;
   position: number;
   // Ordered barrier group among sibling sub-issues (null = unstaged). The
   // parent assignee is woken when a stage closes while a later one waits;

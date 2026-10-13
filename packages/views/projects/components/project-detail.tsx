@@ -15,6 +15,8 @@ import { pinListOptions } from "@multica/core/pins";
 import { useCreatePin, useDeletePin } from "@multica/core/pins";
 import { memberListOptions, agentListOptions } from "@multica/core/workspace/queries";
 import { useWorkspaceId } from "@multica/core/hooks";
+import { useConfigStore } from "@multica/core/config";
+import { ProjectDriveFolderPicker } from "./project-drive-folder-picker";
 import { useIssuesScope } from "@multica/core/issues/stores";
 import { useRecentContextStore } from "@multica/core/chat";
 import { useWorkspacePaths } from "@multica/core/paths";
@@ -131,6 +133,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   const { getActorName } = useActorName();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const googleDriveEnabled = useConfigStore((state) => state.googleDriveEnabled);
   const { data: pinnedItems = [] } = useQuery({
     ...pinListOptions(wsId, userId ?? ""),
     enabled: !!userId,
@@ -397,6 +400,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           <PropRow label={t(($) => $.detail.prop_due_date)}>
             <ProjectDueDatePicker dueDate={project.due_date} onUpdate={handleUpdateField} />
           </PropRow>
+          {googleDriveEnabled && (
+            <PropRow label={t(($) => $.detail.prop_drive_folder)}>
+              <ProjectDriveFolderPicker project={project} />
+            </PropRow>
+          )}
         </div>}
       </div>
 

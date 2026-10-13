@@ -326,6 +326,8 @@ import {
   ListIssuesResponseSchema,
   CreateIssueResponseSchema,
   IssueSchema,
+  IssueDriveFolderResponseSchema,
+  type IssueDriveFolderResponse,
   AgentTaskSchema,
   SourceContextPreviewSchema,
   CommentSubIssueTaskResponseSchema,
@@ -4300,6 +4302,21 @@ export class ApiClient {
     return parseWithFallback(raw, IssuePropertiesResponseSchema, EMPTY_ISSUE_PROPERTIES_RESPONSE, {
       endpoint: "PUT /api/issues/{id}/properties/{propertyId}",
     });
+  }
+
+  /** Creates (or returns) the issue's Google Drive folder under its project's
+   *  Drive folder: <project folder>/Resources/<ISSUE-KEY>. */
+  async createIssueDriveFolder(issueId: string): Promise<IssueDriveFolderResponse> {
+    const raw = await this.fetch<unknown>(`/api/issues/${encodeURIComponent(issueId)}/drive-folder`, {
+      method: "POST",
+    });
+    const folder = parseWithFallback<IssueDriveFolderResponse | null>(raw, IssueDriveFolderResponseSchema, null, {
+      endpoint: "POST /api/issues/{id}/drive-folder",
+    });
+    if (!folder) {
+      throw new Error("POST /api/issues/{id}/drive-folder returned a malformed response");
+    }
+    return folder;
   }
 
   async unsetIssueProperty(issueId: string, propertyId: string): Promise<IssuePropertiesResponse> {
