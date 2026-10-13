@@ -530,6 +530,27 @@ describe("ApiClient schema fallback", () => {
       const res = await client.searchProjects({ q: "roadmap" });
       expect(res).toEqual({ projects: [] });
     });
+
+    it("defaults avatar_url to null for servers without image icons", async () => {
+      const project = {
+        id: "p1",
+        workspace_id: "w1",
+        title: "Roadmap",
+        description: null,
+        icon: "🚀",
+        status: "planned",
+        priority: "none",
+        lead_type: null,
+        lead_id: null,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+        match_source: "title",
+      };
+      stubFetchJson({ projects: [project, { ...project, id: "p2", avatar_url: "https://cdn.example.test/a.png" }] });
+      const client = new ApiClient("https://api.example.test");
+      const res = await client.searchProjects({ q: "roadmap" });
+      expect(res.projects.map((p) => p.avatar_url)).toEqual([null, "https://cdn.example.test/a.png"]);
+    });
   });
 
   // Local search index sync applies whatever these return to the local copy,

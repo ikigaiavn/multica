@@ -180,5 +180,14 @@
     "direction_desc": "降序",
     "section_columns": "列",
     "view": "视图"
+  },
+  "icon_picker": {
+    "emoji_tab": "表情",
+    "image_tab": "图片",
+    "upload_image": "上传图片",
+    "replace_image": "替换图片",
+    "remove_image": "移除图片",
+    "select_image": "请选择一张图片文件。",
+    "upload_failed": "图片上传失败"
   }
 }

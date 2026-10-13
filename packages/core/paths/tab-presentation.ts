@@ -34,7 +34,7 @@ export type TabVisual =
    *  never has to resolve a custom status key on its own. (MUL-6243) */
   | { kind: "issue-status"; status: IssueStatus | null; category?: IssueStatusCategory; color?: string | null; icon?: string | null }
   /** A project's own icon. `null` falls back to the default project glyph. */
-  | { kind: "project-icon"; icon: string | null }
+  | { kind: "project-icon"; icon: string | null; avatarUrl?: string }
   /** An actor's avatar, resolved by the view layer from `actorType`+`id`. */
   | { kind: "actor"; actorType: TabActorType; id: string };
 
@@ -79,7 +79,7 @@ export type InboxSelectionData =
  */
 export interface TabEntityData {
   issue?: { identifier: string; title: string; status: IssueStatus };
-  project?: { icon: string | null; title: string };
+  project?: { icon: string | null; avatarUrl?: string | null; title: string };
   autopilot?: { title: string };
   /** Resolved display name for an actor subject. */
   actorName?: string;
@@ -168,7 +168,11 @@ export function resolveTabPresentation(
       };
     case "project":
       return {
-        visual: { kind: "project-icon", icon: data.project?.icon ?? null },
+        visual: {
+          kind: "project-icon",
+          icon: data.project?.icon ?? null,
+          ...(data.project?.avatarUrl ? { avatarUrl: data.project.avatarUrl } : {}),
+        },
         title: textOr(data.project?.title, "project"),
       };
     case "autopilot":

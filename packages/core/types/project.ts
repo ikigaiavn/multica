@@ -8,6 +8,9 @@ export interface Project {
   title: string;
   description: string | null;
   icon: string | null;
+  // Uploaded image used as the icon; takes precedence over `icon`. Absent on
+  // servers that predate image icons.
+  avatar_url?: string | null;
   status: ProjectStatus;
   priority: ProjectPriority;
   lead_type: "member" | "agent" | null;
@@ -27,6 +30,7 @@ export interface CreateProjectRequest {
   title: string;
   description?: string;
   icon?: string;
+  avatar_url?: string;
   status?: ProjectStatus;
   priority?: ProjectPriority;
   lead_type?: "member" | "agent";
@@ -42,6 +46,8 @@ export interface UpdateProjectRequest {
   title?: string;
   description?: string | null;
   icon?: string | null;
+  // Send null (or "") to remove the image and fall back to `icon`.
+  avatar_url?: string | null;
   status?: ProjectStatus;
   priority?: ProjectPriority;
   lead_type?: "member" | "agent" | null;

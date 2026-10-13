@@ -180,5 +180,14 @@
     "direction_desc": "降順",
     "section_columns": "列",
     "view": "ビュー"
+  },
+  "icon_picker": {
+    "emoji_tab": "絵文字",
+    "image_tab": "画像",
+    "upload_image": "画像をアップロード",
+    "replace_image": "画像を差し替え",
+    "remove_image": "画像を削除",
+    "select_image": "画像ファイルを選択してください。",
+    "upload_failed": "画像のアップロードに失敗しました"
   }
 }

@@ -134,7 +134,7 @@ export function CreateFormAttributeRow() {
         <AttributeChip
           icon={
             project ? (
-              <ProjectIcon icon={project.icon} size="sm" />
+              <ProjectIcon icon={project.icon} avatarUrl={project.avatar_url} size="sm" />
             ) : (
               <Ionicons name="folder-outline" size={14} color="#a1a1aa" />
             )

@@ -51,7 +51,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@multica/ui/components/ui/tooltip";
-import { EmojiPicker } from "@multica/ui/components/common/emoji-picker";
 import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import {
   AnimatedRightSidebar,
@@ -72,6 +71,7 @@ import {
 } from "@multica/ui/components/ui/alert-dialog";
 import { useT } from "../../i18n";
 import { useProjectStatusLabels, useProjectPriorityLabels } from "./labels";
+import { ProjectIconPicker } from "./project-icon-picker";
 import { matchesPinyin } from "../../editor/extensions/pinyin-match";
 
 // ---------------------------------------------------------------------------
@@ -146,7 +146,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   const descEditorRef = useRef<ContentEditorRef>(null);
   const isMobile = useIsMobile();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [progressOpen, setProgressOpen] = useState(true);
   const [descriptionOpen, setDescriptionOpen] = useState(true);
@@ -246,27 +245,13 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     <div className="space-y-5">
       {/* Icon + Title */}
       <div>
-        <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-          <PopoverTrigger
-            render={
-              <button
-                type="button"
-                className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
-                title={t(($) => $.detail.icon_tooltip)}
-              >
-                {project.icon || "📁"}
-              </button>
-            }
-          />
-          <PopoverContent align="start" className="w-auto p-0">
-            <EmojiPicker
-              onSelect={(emoji) => {
-                handleUpdateField({ icon: emoji });
-                setIconPickerOpen(false);
-              }}
-            />
-          </PopoverContent>
-        </Popover>
+        <ProjectIconPicker
+          value={project}
+          title={t(($) => $.detail.icon_tooltip)}
+          onEmojiSelected={(emoji) => handleUpdateField({ icon: emoji, avatar_url: null })}
+          onImageUploaded={(url) => updateProject.mutateAsync({ id: project.id, avatar_url: url })}
+          onImageRemoved={() => handleUpdateField({ avatar_url: null })}
+        />
         <TitleEditor
           key={`title-${projectId}`}
           defaultValue={project.title}

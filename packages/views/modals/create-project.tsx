@@ -47,7 +47,7 @@ import {
 import { Popover, PopoverTrigger, PopoverContent } from "@multica/ui/components/ui/popover";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@multica/ui/components/ui/tooltip";
 import { Button } from "@multica/ui/components/ui/button";
-import { EmojiPicker } from "@multica/ui/components/common/emoji-picker";
+import { ProjectIconPicker } from "../projects/components/project-icon-picker";
 import { ContentEditor, type ContentEditorRef, TitleEditor } from "../editor";
 import { PriorityIcon } from "../issues/components/priority-icon";
 import { ActorAvatar } from "../common/actor-avatar";
@@ -172,7 +172,8 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   // disclosure, mirroring create-issue); these flip a pill inline + open.
   const [startDatePickerOpen, setStartDatePickerOpen] = useState(false);
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  // Not part of the persisted draft: an upload is only kept while the dialog is open.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   // Repos selected to attach as github_repo resources after the project is
@@ -389,6 +390,7 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
         title: title.trim(),
         description: descEditorRef.current?.getMarkdown()?.trim() || undefined,
         icon,
+        avatar_url: avatarUrl ?? undefined,
         status,
         priority,
         lead_type: leadType,
@@ -522,27 +524,16 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="px-5 pb-2 shrink-0">
-          <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-            <PopoverTrigger
-              render={
-                <button
-                  type="button"
-                  className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
-                  title={t(($) => $.create_project.icon_tooltip)}
-                >
-                  {icon || "📁"}
-                </button>
-              }
-            />
-            <PopoverContent align="start" className="w-auto p-0">
-              <EmojiPicker
-                onSelect={(emoji) => {
-                  updateIcon(emoji);
-                  setIconPickerOpen(false);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+          <ProjectIconPicker
+            value={{ icon: icon ?? null, avatar_url: avatarUrl }}
+            title={t(($) => $.create_project.icon_tooltip)}
+            onEmojiSelected={(emoji) => {
+              updateIcon(emoji);
+              setAvatarUrl(null);
+            }}
+            onImageUploaded={(url) => setAvatarUrl(url)}
+            onImageRemoved={() => setAvatarUrl(null)}
+          />
           <TitleEditor
             autoFocus
             defaultValue={draft.title}

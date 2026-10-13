@@ -180,5 +180,14 @@
     "direction_desc": "내림차순",
     "section_columns": "열",
     "view": "보기"
+  },
+  "icon_picker": {
+    "emoji_tab": "이모지",
+    "image_tab": "이미지",
+    "upload_image": "이미지 업로드",
+    "replace_image": "이미지 교체",
+    "remove_image": "이미지 제거",
+    "select_image": "이미지 파일을 선택하세요.",
+    "upload_failed": "이미지 업로드에 실패했어요"
   }
 }

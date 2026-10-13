@@ -165,6 +165,9 @@ vi.mock("@multica/ui/components/ui/dropdown-menu", () => ({
     </button>
   ),
 }));
+vi.mock("../projects/components/project-icon-picker", () => ({
+  ProjectIconPicker: () => <span data-testid="project-icon-picker" />,
+}));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import { CreateProjectModal, buildLocalDirectoryResourceRef } from "./create-project";

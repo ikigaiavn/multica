@@ -200,6 +200,9 @@ vi.mock("@multica/ui/lib/utils", () => ({
     values.filter(Boolean).join(" "),
 }));
 
+vi.mock("../projects/components/project-icon-picker", () => ({
+  ProjectIconPicker: () => <span data-testid="project-icon-picker" />,
+}));
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
