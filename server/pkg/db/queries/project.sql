@@ -37,6 +37,7 @@ UPDATE project SET
     description = sqlc.narg('description'),
     icon = sqlc.narg('icon'),
     avatar_url = CASE WHEN sqlc.arg('set_avatar_url')::bool THEN sqlc.narg('avatar_url') ELSE avatar_url END,
+    drive_folder_id = CASE WHEN sqlc.arg('set_drive_folder_id')::bool THEN sqlc.narg('drive_folder_id') ELSE drive_folder_id END,
     status = COALESCE(sqlc.narg('status'), status),
     priority = COALESCE(sqlc.narg('priority'), priority),
     lead_type = sqlc.narg('lead_type'),

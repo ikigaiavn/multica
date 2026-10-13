@@ -7701,7 +7701,7 @@ func resolveDuplicateOf(ctx context.Context, q IssueMapQuerier, issue db.Issue, 
 }
 
 func IssueToMap(issue db.Issue, issuePrefix string) map[string]any {
-	return map[string]any{
+	m := map[string]any{
 		"id":           util.UUIDToString(issue.ID),
 		"workspace_id": util.UUIDToString(issue.WorkspaceID),
 		"number":       issue.Number,
@@ -7739,6 +7739,18 @@ func IssueToMap(issue db.Issue, issuePrefix string) map[string]any {
 		"metadata":         util.JSONObjectOrEmpty(issue.Metadata),
 		"properties":       util.JSONObjectOrEmpty(issue.Properties),
 	}
+	// Mirrors handler.IssueResponse: present only once a Drive folder exists,
+	// so a payload that never loaded the column leaves cached links alone.
+	if issue.DriveFolderID.Valid && issue.DriveFolderID.String != "" {
+		m["drive_folder_id"] = issue.DriveFolderID.String
+		m["drive_folder_url"] = DriveFolderURL(issue.DriveFolderID.String)
+	}
+	return m
+}
+
+// DriveFolderURL is the browser link for a Google Drive folder ID.
+func DriveFolderURL(id string) string {
+	return "https://drive.google.com/drive/folders/" + id
 }
 
 // IssueIdentifier renders the human-facing issue key ("MUL-42"). Callers that

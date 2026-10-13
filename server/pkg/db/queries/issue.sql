@@ -766,3 +766,18 @@ FROM (
     WHERE workspace_id = $1
     LIMIT sqlc.arg('limit')::bigint
 ) bounded_issues;
+
+-- name: ClaimIssueDriveFolder :one
+-- Records the issue's Drive folder unless one is already recorded, and
+-- returns whichever ID is stored afterwards, so a request that lost a race
+-- hands back the winner's folder instead of overwriting it.
+WITH claimed AS (
+    UPDATE issue SET drive_folder_id = sqlc.arg('drive_folder_id')::text
+    WHERE issue.id = sqlc.arg('issue_id')::uuid AND issue.workspace_id = sqlc.arg('workspace_id')::uuid AND issue.drive_folder_id IS NULL
+    RETURNING issue.drive_folder_id
+)
+SELECT claimed.drive_folder_id FROM claimed
+UNION ALL
+SELECT issue.drive_folder_id FROM issue
+WHERE issue.id = sqlc.arg('issue_id')::uuid AND issue.workspace_id = sqlc.arg('workspace_id')::uuid AND NOT EXISTS (SELECT 1 FROM claimed)
+LIMIT 1;

@@ -105,6 +105,11 @@ type IssueResponse struct {
 	// SourceContext is detail-only. List, board, search, and children responses
 	// deliberately omit the potentially large immutable snapshot.
 	SourceContext *sourceContextDetailResponse `json:"source_context,omitempty"`
+	// DriveFolderID / DriveFolderURL name the issue's Google Drive folder.
+	// Omitted until one exists, and from renderings that never read the
+	// column (list rows), so a client merge keeps the link it already has.
+	DriveFolderID  *string `json:"drive_folder_id,omitempty"`
+	DriveFolderURL *string `json:"drive_folder_url,omitempty"`
 	// duplicateOfIssueID is the raw mark, kept off the wire; see DuplicateOf.
 	duplicateOfIssueID pgtype.UUID
 }
@@ -510,6 +515,8 @@ func issueToResponse(i db.Issue, issuePrefix string) IssueResponse {
 		LastActivityAt:     timestampToNanoPtr(i.LastActivityAt),
 		Metadata:           parseIssueMetadata(i.Metadata),
 		Properties:         parseIssueProperties(i.Properties),
+		DriveFolderID:      nonEmptyTextPtr(i.DriveFolderID),
+		DriveFolderURL:     driveFolderURLPtr(i.DriveFolderID),
 	}
 }
 
