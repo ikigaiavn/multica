@@ -30,10 +30,14 @@ type ProjectResponse struct {
 	// AvatarURL is an uploaded image used as the project icon. When set it
 	// takes precedence over Icon; Icon stays the fallback for older clients.
 	AvatarURL *string `json:"avatar_url"`
-	Status    string  `json:"status"`
-	Priority  string  `json:"priority"`
-	LeadType  *string `json:"lead_type"`
-	LeadID    *string `json:"lead_id"`
+	// DriveFolderID is the Google Drive folder holding the project's files;
+	// issue folders are created under its "Resources" child.
+	DriveFolderID  *string `json:"drive_folder_id"`
+	DriveFolderURL *string `json:"drive_folder_url"`
+	Status         string  `json:"status"`
+	Priority       string  `json:"priority"`
+	LeadType       *string `json:"lead_type"`
+	LeadID         *string `json:"lead_id"`
 	// StartDate / DueDate are calendar days ("YYYY-MM-DD"), no time-of-day or
 	// timezone — same contract as issue.start_date / issue.due_date.
 	StartDate  *string `json:"start_date"`
@@ -51,20 +55,22 @@ type ProjectResponse struct {
 
 func (h *Handler) projectToResponse(p db.Project) ProjectResponse {
 	return ProjectResponse{
-		ID:          uuidToString(p.ID),
-		WorkspaceID: uuidToString(p.WorkspaceID),
-		Title:       p.Title,
-		Description: textToPtr(p.Description),
-		Icon:        textToPtr(p.Icon),
-		AvatarURL:   h.resolveAvatarURLPtr(textToPtr(p.AvatarUrl)),
-		Status:      p.Status,
-		Priority:    p.Priority,
-		LeadType:    textToPtr(p.LeadType),
-		LeadID:      uuidToPtr(p.LeadID),
-		StartDate:   dateToPtr(p.StartDate),
-		DueDate:     dateToPtr(p.DueDate),
-		CreatedAt:   timestampToString(p.CreatedAt),
-		UpdatedAt:   timestampToString(p.UpdatedAt),
+		ID:             uuidToString(p.ID),
+		WorkspaceID:    uuidToString(p.WorkspaceID),
+		Title:          p.Title,
+		Description:    textToPtr(p.Description),
+		Icon:           textToPtr(p.Icon),
+		AvatarURL:      h.resolveAvatarURLPtr(textToPtr(p.AvatarUrl)),
+		DriveFolderID:  textToPtr(p.DriveFolderID),
+		DriveFolderURL: driveFolderURLPtr(p.DriveFolderID),
+		Status:         p.Status,
+		Priority:       p.Priority,
+		LeadType:       textToPtr(p.LeadType),
+		LeadID:         uuidToPtr(p.LeadID),
+		StartDate:      dateToPtr(p.StartDate),
+		DueDate:        dateToPtr(p.DueDate),
+		CreatedAt:      timestampToString(p.CreatedAt),
+		UpdatedAt:      timestampToString(p.UpdatedAt),
 	}
 }
 
@@ -131,6 +137,8 @@ type UpdateProjectRequest struct {
 	Description *string `json:"description"`
 	Icon        *string `json:"icon"`
 	AvatarURL   *string `json:"avatar_url"`
+	// DriveFolder is a Google Drive folder link or ID; empty or null clears.
+	DriveFolder *string `json:"drive_folder"`
 	Status      *string `json:"status"`
 	Priority    *string `json:"priority"`
 	LeadType    *string `json:"lead_type"`
@@ -567,6 +575,16 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 			params.AvatarUrl = pgtype.Text{String: accepted, Valid: true}
 		}
 	}
+	if _, ok := rawFields["drive_folder"]; ok {
+		params.SetDriveFolderID = true
+		if req.DriveFolder != nil && strings.TrimSpace(*req.DriveFolder) != "" {
+			folderID, ok := h.acceptProjectDriveFolder(w, r, *req.DriveFolder)
+			if !ok {
+				return
+			}
+			params.DriveFolderID = pgtype.Text{String: folderID, Valid: true}
+		}
+	}
 	if _, ok := rawFields["lead_type"]; ok {
 		if req.LeadType != nil {
 			params.LeadType = pgtype.Text{String: *req.LeadType, Valid: true}
@@ -823,7 +841,7 @@ func buildProjectSearchQuery(phrase string, terms []string, includeClosed bool) 
 	limitParam := nextArg(nil)
 	offsetParam := nextArg(nil)
 
-	query := fmt.Sprintf(`SELECT p.id, p.workspace_id, p.title, p.description, p.icon, p.avatar_url,
+	query := fmt.Sprintf(`SELECT p.id, p.workspace_id, p.title, p.description, p.icon, p.avatar_url, p.drive_folder_id,
 		p.status, p.priority, p.lead_type, p.lead_id,
 		p.start_date, p.due_date,
 		p.created_at, p.updated_at,
@@ -899,6 +917,7 @@ func (h *Handler) SearchProjects(w http.ResponseWriter, r *http.Request) {
 				&row.project.Description,
 				&row.project.Icon,
 				&row.project.AvatarUrl,
+				&row.project.DriveFolderID,
 				&row.project.Status,
 				&row.project.Priority,
 				&row.project.LeadType,

@@ -69,6 +69,31 @@ Google is the only sign-in method for web, desktop, the CLI and mobile. Create a
 
 Changes take effect after restarting the backend / compose stack. The web UI reads `GOOGLE_CLIENT_ID` from `/api/config` at runtime, so no web rebuild is needed.
 
+### Google Drive Folders (Optional)
+
+Projects can link a Google Drive folder (for example `04-Projects/02-Blum` in a Shared Drive). Each issue in the project then shows a **Drive Folder** row; clicking **Create folder** creates `<project folder>/Resources/<ISSUE-KEY>`, reusing folders that already exist, and stores the link on the issue.
+
+The server works in Drive as a dedicated Google Workspace user (a bot account such as `drive-bot@example.com`), authenticated with an OAuth refresh token.
+
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_DRIVE_REFRESH_TOKEN` | Refresh token for the bot account, with the `https://www.googleapis.com/auth/drive` scope. Required to enable the integration |
+| `GOOGLE_DRIVE_CLIENT_ID` | OAuth client the token was issued for. Falls back to `GOOGLE_CLIENT_ID` |
+| `GOOGLE_DRIVE_CLIENT_SECRET` | Its secret. Falls back to `GOOGLE_CLIENT_SECRET` |
+
+Setup:
+
+1. Create the bot account in Google Workspace and add it to the Shared Drive as **Content manager**.
+2. In Google Cloud, enable the **Google Drive API** for the project that owns the OAuth client, and make sure the OAuth consent screen is **Internal**. In Testing mode refresh tokens expire after 7 days.
+3. On the OAuth client (the sign-in client works), add `https://developers.google.com/oauthplayground` as an **Authorized redirect URI**.
+4. Open the [OAuth 2.0 Playground](https://developers.google.com/oauthplayground), open the gear menu, tick **Use your own OAuth credentials** and enter the client ID and secret.
+5. In step 1, enter the scope `https://www.googleapis.com/auth/drive`, click **Authorize APIs** and sign in **as the bot account**.
+6. In step 2, click **Exchange authorization code for tokens** and copy the **Refresh token**.
+7. Set `GOOGLE_DRIVE_REFRESH_TOKEN` (and the client variables if you used a different client), then restart the backend. The log shows `google drive integration enabled`.
+8. In each project, open **Drive** in the properties panel and paste the project's folder link.
+
+If the token is revoked, issue folder creation fails with "Google Drive access has expired" and the server log asks for a new refresh token; repeat steps 4–7.
+
 ### Signup Controls (Optional)
 
 | Variable | Description |

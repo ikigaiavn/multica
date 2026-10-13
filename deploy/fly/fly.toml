@@ -1,6 +1,9 @@
 # Multica (internal) on Fly.io: one machine serving work.ikigaia.vn.
 # Secrets (fly secrets set): DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID,
-# GOOGLE_CLIENT_SECRET.
+# GOOGLE_CLIENT_SECRET. Optional Google Drive folders: GOOGLE_DRIVE_REFRESH_TOKEN
+# (bot account refresh token from the OAuth Playground; see
+# SELF_HOSTING_ADVANCED.md), plus GOOGLE_DRIVE_CLIENT_ID/SECRET if the token
+# was issued for a different OAuth client.
 app = "ikigaia-work"
 primary_region = "sin"
 

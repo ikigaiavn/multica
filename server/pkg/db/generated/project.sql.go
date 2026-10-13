@@ -29,7 +29,7 @@ INSERT INTO project (
     lead_type, lead_id, priority, start_date, due_date, avatar_url
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-) RETURNING id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url
+) RETURNING id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url, drive_folder_id
 `
 
 type CreateProjectParams struct {
@@ -76,6 +76,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.StartDate,
 		&i.DueDate,
 		&i.AvatarUrl,
+		&i.DriveFolderID,
 	)
 	return i, err
 }
@@ -96,7 +97,7 @@ func (q *Queries) DeleteProject(ctx context.Context, arg DeleteProjectParams) er
 }
 
 const getProjectInWorkspace = `-- name: GetProjectInWorkspace :one
-SELECT id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url FROM project
+SELECT id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url, drive_folder_id FROM project
 WHERE id = $1 AND workspace_id = $2
 `
 
@@ -123,6 +124,7 @@ func (q *Queries) GetProjectInWorkspace(ctx context.Context, arg GetProjectInWor
 		&i.StartDate,
 		&i.DueDate,
 		&i.AvatarUrl,
+		&i.DriveFolderID,
 	)
 	return i, err
 }
@@ -170,7 +172,7 @@ func (q *Queries) GetProjectIssueStats(ctx context.Context, arg GetProjectIssueS
 }
 
 const listProjects = `-- name: ListProjects :many
-SELECT id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url FROM project
+SELECT id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url, drive_folder_id FROM project
 WHERE workspace_id = $1
   AND ($2::text IS NULL OR status = $2)
   AND ($3::text IS NULL OR priority = $3)
@@ -207,6 +209,7 @@ func (q *Queries) ListProjects(ctx context.Context, arg ListProjectsParams) ([]P
 			&i.StartDate,
 			&i.DueDate,
 			&i.AvatarUrl,
+			&i.DriveFolderID,
 		); err != nil {
 			return nil, err
 		}
@@ -264,30 +267,33 @@ UPDATE project SET
     description = $3,
     icon = $4,
     avatar_url = CASE WHEN $5::bool THEN $6 ELSE avatar_url END,
-    status = COALESCE($7, status),
-    priority = COALESCE($8, priority),
-    lead_type = $9,
-    lead_id = $10,
-    start_date = $11,
-    due_date = $12,
+    drive_folder_id = CASE WHEN $7::bool THEN $8 ELSE drive_folder_id END,
+    status = COALESCE($9, status),
+    priority = COALESCE($10, priority),
+    lead_type = $11,
+    lead_id = $12,
+    start_date = $13,
+    due_date = $14,
     updated_at = now()
 WHERE id = $1
-RETURNING id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url
+RETURNING id, workspace_id, title, description, icon, status, lead_type, lead_id, created_at, updated_at, priority, start_date, due_date, avatar_url, drive_folder_id
 `
 
 type UpdateProjectParams struct {
-	ID           pgtype.UUID `json:"id"`
-	Title        pgtype.Text `json:"title"`
-	Description  pgtype.Text `json:"description"`
-	Icon         pgtype.Text `json:"icon"`
-	SetAvatarUrl bool        `json:"set_avatar_url"`
-	AvatarUrl    pgtype.Text `json:"avatar_url"`
-	Status       pgtype.Text `json:"status"`
-	Priority     pgtype.Text `json:"priority"`
-	LeadType     pgtype.Text `json:"lead_type"`
-	LeadID       pgtype.UUID `json:"lead_id"`
-	StartDate    pgtype.Date `json:"start_date"`
-	DueDate      pgtype.Date `json:"due_date"`
+	ID               pgtype.UUID `json:"id"`
+	Title            pgtype.Text `json:"title"`
+	Description      pgtype.Text `json:"description"`
+	Icon             pgtype.Text `json:"icon"`
+	SetAvatarUrl     bool        `json:"set_avatar_url"`
+	AvatarUrl        pgtype.Text `json:"avatar_url"`
+	SetDriveFolderID bool        `json:"set_drive_folder_id"`
+	DriveFolderID    pgtype.Text `json:"drive_folder_id"`
+	Status           pgtype.Text `json:"status"`
+	Priority         pgtype.Text `json:"priority"`
+	LeadType         pgtype.Text `json:"lead_type"`
+	LeadID           pgtype.UUID `json:"lead_id"`
+	StartDate        pgtype.Date `json:"start_date"`
+	DueDate          pgtype.Date `json:"due_date"`
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
@@ -298,6 +304,8 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 		arg.Icon,
 		arg.SetAvatarUrl,
 		arg.AvatarUrl,
+		arg.SetDriveFolderID,
+		arg.DriveFolderID,
 		arg.Status,
 		arg.Priority,
 		arg.LeadType,
@@ -321,6 +329,7 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 		&i.StartDate,
 		&i.DueDate,
 		&i.AvatarUrl,
+		&i.DriveFolderID,
 	)
 	return i, err
 }

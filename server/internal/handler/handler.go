@@ -28,6 +28,7 @@ import (
 	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
 	composio "github.com/multica-ai/multica/server/internal/integrations/composio"
 	"github.com/multica-ai/multica/server/internal/integrations/dingtalk"
+	"github.com/multica-ai/multica/server/internal/integrations/gdrive"
 	"github.com/multica-ai/multica/server/internal/integrations/ghsnapshot"
 	"github.com/multica-ai/multica/server/internal/integrations/lark"
 	"github.com/multica-ai/multica/server/internal/integrations/slack"
@@ -224,10 +225,13 @@ type Handler struct {
 	Entitlements entitlement.Provider
 	// SeatCapacity executes Cloud's pre-purchased human-seat protocol. Nil or
 	// disabled preserves self-hosted behavior.
-	SeatCapacity          seatcapacity.Executor
-	SeatCapacityLocker    seatcapacity.WorkspaceLocker
-	SeatCapacityWorker    *seatcapacity.Worker
-	EmailService          *service.EmailService
+	SeatCapacity       seatcapacity.Executor
+	SeatCapacityLocker seatcapacity.WorkspaceLocker
+	SeatCapacityWorker *seatcapacity.Worker
+	EmailService       *service.EmailService
+	// GoogleDrive creates issue folders in the company Shared Drive as the
+	// Drive bot account. Nil when its OAuth credentials are not configured.
+	GoogleDrive           *gdrive.Client
 	UpdateStore           UpdateStore
 	ModelListStore        ModelListStore
 	LocalSkillListStore   LocalSkillListStore

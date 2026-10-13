@@ -846,6 +846,7 @@ type Issue struct {
 	LastActivityAt     pgtype.Timestamptz `json:"last_activity_at"`
 	TriageState        pgtype.Text        `json:"triage_state"`
 	DuplicateOfIssueID pgtype.UUID        `json:"duplicate_of_issue_id"`
+	DriveFolderID      pgtype.Text        `json:"drive_folder_id"`
 }
 
 type IssueChildEvent struct {
@@ -1320,20 +1321,21 @@ type PluginStorage struct {
 }
 
 type Project struct {
-	ID          pgtype.UUID        `json:"id"`
-	WorkspaceID pgtype.UUID        `json:"workspace_id"`
-	Title       string             `json:"title"`
-	Description pgtype.Text        `json:"description"`
-	Icon        pgtype.Text        `json:"icon"`
-	Status      string             `json:"status"`
-	LeadType    pgtype.Text        `json:"lead_type"`
-	LeadID      pgtype.UUID        `json:"lead_id"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	Priority    string             `json:"priority"`
-	StartDate   pgtype.Date        `json:"start_date"`
-	DueDate     pgtype.Date        `json:"due_date"`
-	AvatarUrl   pgtype.Text        `json:"avatar_url"`
+	ID            pgtype.UUID        `json:"id"`
+	WorkspaceID   pgtype.UUID        `json:"workspace_id"`
+	Title         string             `json:"title"`
+	Description   pgtype.Text        `json:"description"`
+	Icon          pgtype.Text        `json:"icon"`
+	Status        string             `json:"status"`
+	LeadType      pgtype.Text        `json:"lead_type"`
+	LeadID        pgtype.UUID        `json:"lead_id"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	Priority      string             `json:"priority"`
+	StartDate     pgtype.Date        `json:"start_date"`
+	DueDate       pgtype.Date        `json:"due_date"`
+	AvatarUrl     pgtype.Text        `json:"avatar_url"`
+	DriveFolderID pgtype.Text        `json:"drive_folder_id"`
 }
 
 type ProjectResource struct {
