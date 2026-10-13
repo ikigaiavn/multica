@@ -550,6 +550,24 @@ describe("ApiClient schema fallback", () => {
       const client = new ApiClient("https://api.example.test");
       const res = await client.searchProjects({ q: "roadmap" });
       expect(res.projects.map((p) => p.avatar_url)).toEqual([null, "https://cdn.example.test/a.png"]);
+      expect(res.projects.map((p) => p.drive_folder_url)).toEqual([null, null]);
+    });
+  });
+
+  describe("createIssueDriveFolder", () => {
+    it("returns the folder", async () => {
+      stubFetchJson({ drive_folder_id: "1Abc", drive_folder_url: "https://drive.google.com/drive/folders/1Abc" });
+      const client = new ApiClient("https://api.example.test");
+      await expect(client.createIssueDriveFolder("issue-1")).resolves.toEqual({
+        drive_folder_id: "1Abc",
+        drive_folder_url: "https://drive.google.com/drive/folders/1Abc",
+      });
+    });
+
+    it("rejects a malformed response instead of reporting a folder", async () => {
+      stubFetchJson({ drive_folder_id: "" });
+      const client = new ApiClient("https://api.example.test");
+      await expect(client.createIssueDriveFolder("issue-1")).rejects.toThrow(/malformed/);
     });
   });
 

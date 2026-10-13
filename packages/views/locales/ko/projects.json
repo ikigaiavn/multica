@@ -69,6 +69,7 @@
     "section_description": "설명",
     "prop_start_date": "시작일",
     "prop_due_date": "마감일",
+    "prop_drive_folder": "Drive",
     "no_start_date": "시작일 없음",
     "no_due_date": "마감일 없음",
     "description_placeholder": "설명 추가...",
@@ -189,5 +190,15 @@
     "remove_image": "이미지 제거",
     "select_image": "이미지 파일을 선택하세요.",
     "upload_failed": "이미지 업로드에 실패했어요"
+  },
+  "drive_folder": {
+    "link": "폴더 연결",
+    "linked": "Google Drive",
+    "placeholder": "Google Drive 폴더 링크 붙여넣기",
+    "input_label": "Google Drive 폴더 링크",
+    "save": "저장",
+    "unlink": "연결 해제",
+    "open": "Google Drive에서 열기",
+    "save_failed": "폴더를 연결하지 못했습니다. 다시 시도하세요."
   }
 }

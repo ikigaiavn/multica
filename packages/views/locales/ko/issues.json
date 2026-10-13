@@ -435,6 +435,7 @@
     "prop_start_date": "시작일",
     "prop_due_date": "마감일",
     "prop_project": "프로젝트",
+    "prop_drive_folder": "Drive 폴더",
     "prop_labels": "라벨",
     "add_property_action": "속성 추가",
     "prop_created_by": "생성자",
@@ -479,7 +480,11 @@
     "project_directory_path_copied_with_branch": "프로젝트 디렉터리 경로를 복사했습니다 — 작업은 {{branch}} 브랜치에 있습니다",
     "workdir_path_copy_failed": "작업 디렉터리 경로를 복사하지 못했습니다",
     "workdir_path_unavailable": "아직 로컬 작업 디렉터리가 없습니다. 로컬 에이전트가 이 태스크를 실행하지 않았습니다",
-    "pull_requests_empty_title": "연결된 PR이 없습니다."
+    "pull_requests_empty_title": "연결된 PR이 없습니다.",
+    "drive_folder_open": "폴더 열기",
+    "drive_folder_create": "폴더 만들기",
+    "drive_folder_creating": "만드는 중…",
+    "drive_folder_failed": "Drive 폴더를 만들지 못했습니다. 다시 시도하세요."
   },
   "timeline": {
     "loading": "불러오는 중..."

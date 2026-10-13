@@ -1271,6 +1271,17 @@ describe("AppConfigSchema comment_delete_keep_replies_supported drift", () => {
   });
 });
 
+describe("AppConfigSchema google_drive_enabled", () => {
+  it.each([
+    [undefined, false],
+    ["yes", false],
+    [true, true],
+  ])("%j parses as %s", (value, expected) => {
+    const parsed = AppConfigSchema.parse({ cdn_domain: "cdn.example.com", google_drive_enabled: value });
+    expect(parsed.google_drive_enabled ?? false).toBe(expected);
+  });
+});
+
 describe("AppConfigSchema local_worktree_supported drift", () => {
   it("defaults to false when the server predates the signal", () => {
     const parsed = AppConfigSchema.parse({ cdn_domain: "cdn.example.com" });

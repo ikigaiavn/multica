@@ -435,6 +435,7 @@
     "prop_start_date": "开始日期",
     "prop_due_date": "截止日期",
     "prop_project": "项目",
+    "prop_drive_folder": "Drive 文件夹",
     "prop_labels": "标签",
     "add_property_action": "添加字段",
     "prop_created_by": "创建者",
@@ -479,7 +480,11 @@
     "workdir_path_unavailable": "暂无本地 workdir — 这个任务还没被本地智能体运行过",
     "unsubscribe_subtree_succeeded": "已取消订阅此任务及其子任务。",
     "subscription_update_failed": "无法更新订阅状态，请重试。",
-    "pull_requests_empty_title": "暂无关联 PR。"
+    "pull_requests_empty_title": "暂无关联 PR。",
+    "drive_folder_open": "打开文件夹",
+    "drive_folder_create": "创建文件夹",
+    "drive_folder_creating": "正在创建…",
+    "drive_folder_failed": "无法创建 Drive 文件夹，请重试。"
   },
   "timeline": {
     "loading": "加载中…"

@@ -69,6 +69,7 @@
     "section_description": "説明",
     "prop_start_date": "開始日",
     "prop_due_date": "期限",
+    "prop_drive_folder": "Drive",
     "no_start_date": "開始日なし",
     "no_due_date": "期限なし",
     "description_placeholder": "説明を追加...",
@@ -189,5 +190,15 @@
     "remove_image": "画像を削除",
     "select_image": "画像ファイルを選択してください。",
     "upload_failed": "画像のアップロードに失敗しました"
+  },
+  "drive_folder": {
+    "link": "フォルダをリンク",
+    "linked": "Google Drive",
+    "placeholder": "Google Drive のフォルダリンクを貼り付け",
+    "input_label": "Google Drive のフォルダリンク",
+    "save": "保存",
+    "unlink": "リンクを解除",
+    "open": "Google Drive で開く",
+    "save_failed": "フォルダをリンクできませんでした。もう一度お試しください。"
   }
 }

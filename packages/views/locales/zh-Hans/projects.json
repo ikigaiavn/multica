@@ -69,6 +69,7 @@
     "section_description": "描述",
     "prop_start_date": "开始日期",
     "prop_due_date": "截止日期",
+    "prop_drive_folder": "Drive",
     "no_start_date": "无开始日期",
     "no_due_date": "无截止日期",
     "description_placeholder": "添加描述...",
@@ -189,5 +190,15 @@
     "remove_image": "移除图片",
     "select_image": "请选择一张图片文件。",
     "upload_failed": "图片上传失败"
+  },
+  "drive_folder": {
+    "link": "关联文件夹",
+    "linked": "Google Drive",
+    "placeholder": "粘贴 Google Drive 文件夹链接",
+    "input_label": "Google Drive 文件夹链接",
+    "save": "保存",
+    "unlink": "取消关联",
+    "open": "在 Google Drive 中打开",
+    "save_failed": "无法关联文件夹，请重试。"
   }
 }

@@ -23,6 +23,9 @@ interface ConfigState {
   // section is hidden. Defaults to false so unknown / older servers and the
   // managed cloud (which omits the field) keep it hidden.
   vcsIntegrationAvailable: boolean;
+  // Whether the server can create Google Drive folders. False hides every
+  // Drive control (project folder setting, issue "Drive Folder" row).
+  googleDriveEnabled: boolean;
   featureFlags: Record<string, boolean>;
   // The running API build version, surfaced in the Help popover so
   // self-hosted operators can confirm what's deployed. Empty for dev builds
@@ -52,6 +55,7 @@ interface ConfigState {
     googleClientId?: string;
     workspaceCreationDisabled?: boolean;
     vcsIntegrationAvailable?: boolean;
+    googleDriveEnabled?: boolean;
   }) => void;
   setDaemonConfig: (config: {
     daemonServerUrl?: string;
@@ -75,6 +79,7 @@ export const configStore = createStore<ConfigState>((set) => ({
   daemonAppUrl: "",
   workspaceCreationDisabled: false,
   vcsIntegrationAvailable: false,
+  googleDriveEnabled: false,
   featureFlags: {},
   serverVersion: "",
   localWorktreeSupported: false,
@@ -87,6 +92,7 @@ export const configStore = createStore<ConfigState>((set) => ({
     googleClientId = "",
     workspaceCreationDisabled = false,
     vcsIntegrationAvailable = false,
+    googleDriveEnabled = false,
   }) =>
     set({
       allowSignup,
@@ -94,6 +100,7 @@ export const configStore = createStore<ConfigState>((set) => ({
       authConfigLoaded: true,
       workspaceCreationDisabled,
       vcsIntegrationAvailable,
+      googleDriveEnabled,
     }),
   setDaemonConfig: ({ daemonServerUrl = "", daemonAppUrl = "" }) =>
     set({ daemonServerUrl, daemonAppUrl }),

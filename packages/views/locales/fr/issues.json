@@ -440,6 +440,7 @@
     "prop_start_date": "Date de début",
     "prop_due_date": "Date d'échéance",
     "prop_project": "Projet",
+    "prop_drive_folder": "Dossier Drive",
     "prop_labels": "Étiquettes",
     "add_property_action": "Ajouter une propriété",
     "prop_created_by": "Créé par",
@@ -484,7 +485,11 @@
     "project_directory_path_copied_with_branch": "Chemin du répertoire du projet copié — le travail se trouve sur {{branch}}",
     "workdir_path_copy_failed": "Échec de la copie du chemin du répertoire de travail",
     "workdir_path_unavailable": "Aucun répertoire de travail local — cette tâche n'a pas encore été traitée par un agent local",
-    "pull_requests_empty_title": "Aucune pull request associée."
+    "pull_requests_empty_title": "Aucune pull request associée.",
+    "drive_folder_open": "Ouvrir le dossier",
+    "drive_folder_create": "Créer le dossier",
+    "drive_folder_creating": "Création…",
+    "drive_folder_failed": "Impossible de créer le dossier Drive. Réessayez."
   },
   "timeline": {
     "loading": "Chargement..."

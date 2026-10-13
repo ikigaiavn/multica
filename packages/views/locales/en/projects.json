@@ -70,6 +70,7 @@
     "section_description": "Description",
     "prop_start_date": "Start date",
     "prop_due_date": "Due date",
+    "prop_drive_folder": "Drive",
     "no_start_date": "No start date",
     "no_due_date": "No due date",
     "description_placeholder": "Add description...",
@@ -191,5 +192,15 @@
     "remove_image": "Remove image",
     "select_image": "Please choose an image file.",
     "upload_failed": "Failed to upload image"
+  },
+  "drive_folder": {
+    "link": "Link folder",
+    "linked": "Google Drive",
+    "placeholder": "Paste a Google Drive folder link",
+    "input_label": "Google Drive folder link",
+    "save": "Save",
+    "unlink": "Unlink",
+    "open": "Open in Google Drive",
+    "save_failed": "Couldn't link the folder. Try again."
   }
 }

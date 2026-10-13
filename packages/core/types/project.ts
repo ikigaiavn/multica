@@ -11,6 +11,10 @@ export interface Project {
   // Uploaded image used as the icon; takes precedence over `icon`. Absent on
   // servers that predate image icons.
   avatar_url?: string | null;
+  // Google Drive folder holding the project's files; issue folders are created
+  // inside its "Resources" child. Absent on servers without the integration.
+  drive_folder_id?: string | null;
+  drive_folder_url?: string | null;
   status: ProjectStatus;
   priority: ProjectPriority;
   lead_type: "member" | "agent" | null;
@@ -48,6 +52,8 @@ export interface UpdateProjectRequest {
   icon?: string | null;
   // Send null (or "") to remove the image and fall back to `icon`.
   avatar_url?: string | null;
+  // A Google Drive folder link or ID; null (or "") unlinks it.
+  drive_folder?: string | null;
   status?: ProjectStatus;
   priority?: ProjectPriority;
   lead_type?: "member" | "agent" | null;

@@ -70,6 +70,7 @@
     "section_description": "Description",
     "prop_start_date": "Date de début",
     "prop_due_date": "Date d'échéance",
+    "prop_drive_folder": "Drive",
     "no_start_date": "Aucune date de début",
     "no_due_date": "Aucune date d'échéance",
     "description_placeholder": "Ajouter une description...",
@@ -191,5 +192,15 @@
     "remove_image": "Supprimer l'image",
     "select_image": "Veuillez choisir un fichier image.",
     "upload_failed": "Échec de l'envoi de l'image"
+  },
+  "drive_folder": {
+    "link": "Lier un dossier",
+    "linked": "Google Drive",
+    "placeholder": "Collez le lien d’un dossier Google Drive",
+    "input_label": "Lien du dossier Google Drive",
+    "save": "Enregistrer",
+    "unlink": "Délier",
+    "open": "Ouvrir dans Google Drive",
+    "save_failed": "Impossible de lier le dossier. Réessayez."
   }
 }
