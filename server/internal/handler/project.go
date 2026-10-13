@@ -27,10 +27,13 @@ type ProjectResponse struct {
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	Icon        *string `json:"icon"`
-	Status      string  `json:"status"`
-	Priority    string  `json:"priority"`
-	LeadType    *string `json:"lead_type"`
-	LeadID      *string `json:"lead_id"`
+	// AvatarURL is an uploaded image used as the project icon. When set it
+	// takes precedence over Icon; Icon stays the fallback for older clients.
+	AvatarURL *string `json:"avatar_url"`
+	Status    string  `json:"status"`
+	Priority  string  `json:"priority"`
+	LeadType  *string `json:"lead_type"`
+	LeadID    *string `json:"lead_id"`
 	// StartDate / DueDate are calendar days ("YYYY-MM-DD"), no time-of-day or
 	// timezone — same contract as issue.start_date / issue.due_date.
 	StartDate  *string `json:"start_date"`
@@ -46,13 +49,14 @@ type ProjectResponse struct {
 	ResourceCount int64 `json:"resource_count"`
 }
 
-func projectToResponse(p db.Project) ProjectResponse {
+func (h *Handler) projectToResponse(p db.Project) ProjectResponse {
 	return ProjectResponse{
 		ID:          uuidToString(p.ID),
 		WorkspaceID: uuidToString(p.WorkspaceID),
 		Title:       p.Title,
 		Description: textToPtr(p.Description),
 		Icon:        textToPtr(p.Icon),
+		AvatarURL:   h.resolveAvatarURLPtr(textToPtr(p.AvatarUrl)),
 		Status:      p.Status,
 		Priority:    p.Priority,
 		LeadType:    textToPtr(p.LeadType),
@@ -102,6 +106,7 @@ type CreateProjectRequest struct {
 	Title       string                                `json:"title"`
 	Description *string                               `json:"description"`
 	Icon        *string                               `json:"icon"`
+	AvatarURL   *string                               `json:"avatar_url"`
 	Status      string                                `json:"status"`
 	Priority    string                                `json:"priority"`
 	LeadType    *string                               `json:"lead_type"`
@@ -125,6 +130,7 @@ type UpdateProjectRequest struct {
 	Title       *string `json:"title"`
 	Description *string `json:"description"`
 	Icon        *string `json:"icon"`
+	AvatarURL   *string `json:"avatar_url"`
 	Status      *string `json:"status"`
 	Priority    *string `json:"priority"`
 	LeadType    *string `json:"lead_type"`
@@ -186,7 +192,7 @@ func (h *Handler) ListProjects(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]ProjectResponse, len(projects))
 	for i, p := range projects {
-		resp[i] = projectToResponse(p)
+		resp[i] = h.projectToResponse(p)
 		if s, ok := statsMap[resp[i].ID]; ok {
 			resp[i].IssueCount = s.TotalCount
 			resp[i].DoneCount = s.DoneCount
@@ -214,7 +220,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "project not found")
 		return
 	}
-	resp := projectToResponse(project)
+	resp := h.projectToResponse(project)
 	resp.IssueCount, resp.DoneCount = h.loadProjectIssueStats(r.Context(), wsUUID, project.ID)
 	resp.ResourceCount = h.loadProjectResourceCount(r.Context(), project.ID)
 	writeJSON(w, http.StatusOK, resp)
@@ -367,6 +373,15 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var avatarURL pgtype.Text
+	if req.AvatarURL != nil && strings.TrimSpace(*req.AvatarURL) != "" {
+		accepted, ok := h.acceptAvatarURL(w, r, *req.AvatarURL, "")
+		if !ok {
+			return
+		}
+		avatarURL = pgtype.Text{String: accepted, Valid: true}
+	}
+
 	createParams := db.CreateProjectParams{
 		WorkspaceID: wsUUID,
 		Title:       req.Title,
@@ -378,6 +393,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		Priority:    priority,
 		StartDate:   startDate,
 		DueDate:     dueDate,
+		AvatarUrl:   avatarURL,
 	}
 
 	// Without resources, keep the simple non-tx path.
@@ -387,7 +403,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 			h.writeProjectWriteError(w, r, err, "create")
 			return
 		}
-		resp := projectToResponse(project)
+		resp := h.projectToResponse(project)
 		h.publish(protocol.EventProjectCreated, workspaceID, "member", userID, map[string]any{"project": resp})
 		writeJSON(w, http.StatusCreated, resp)
 		return
@@ -447,7 +463,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	for i, row := range resourceRows {
 		resourceResp[i] = projectResourceToResponse(row)
 	}
-	resp := projectToResponse(project)
+	resp := h.projectToResponse(project)
 	resp.ResourceCount = int64(len(resourceResp))
 	h.publish(protocol.EventProjectCreated, workspaceID, "member", userID, map[string]any{"project": resp})
 	for _, rr := range resourceResp {
@@ -541,6 +557,16 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 			params.Icon = pgtype.Text{Valid: false}
 		}
 	}
+	if _, ok := rawFields["avatar_url"]; ok {
+		params.SetAvatarUrl = true
+		if req.AvatarURL != nil && strings.TrimSpace(*req.AvatarURL) != "" {
+			accepted, ok := h.acceptAvatarURL(w, r, *req.AvatarURL, prevProject.AvatarUrl.String)
+			if !ok {
+				return
+			}
+			params.AvatarUrl = pgtype.Text{String: accepted, Valid: true}
+		}
+	}
 	if _, ok := rawFields["lead_type"]; ok {
 		if req.LeadType != nil {
 			params.LeadType = pgtype.Text{String: *req.LeadType, Valid: true}
@@ -590,7 +616,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		h.writeProjectWriteError(w, r, err, "update")
 		return
 	}
-	resp := projectToResponse(project)
+	resp := h.projectToResponse(project)
 	resp.IssueCount, resp.DoneCount = h.loadProjectIssueStats(r.Context(), wsUUID, project.ID)
 	resp.ResourceCount = h.loadProjectResourceCount(r.Context(), project.ID)
 	h.publish(protocol.EventProjectUpdated, workspaceID, "member", userID, map[string]any{"project": resp})
@@ -797,7 +823,7 @@ func buildProjectSearchQuery(phrase string, terms []string, includeClosed bool) 
 	limitParam := nextArg(nil)
 	offsetParam := nextArg(nil)
 
-	query := fmt.Sprintf(`SELECT p.id, p.workspace_id, p.title, p.description, p.icon,
+	query := fmt.Sprintf(`SELECT p.id, p.workspace_id, p.title, p.description, p.icon, p.avatar_url,
 		p.status, p.priority, p.lead_type, p.lead_id,
 		p.start_date, p.due_date,
 		p.created_at, p.updated_at,
@@ -872,6 +898,7 @@ func (h *Handler) SearchProjects(w http.ResponseWriter, r *http.Request) {
 				&row.project.Title,
 				&row.project.Description,
 				&row.project.Icon,
+				&row.project.AvatarUrl,
 				&row.project.Status,
 				&row.project.Priority,
 				&row.project.LeadType,
@@ -933,7 +960,7 @@ func (h *Handler) SearchProjects(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]SearchProjectResponse, len(results))
 	for i, row := range results {
-		pr := projectToResponse(row.project)
+		pr := h.projectToResponse(row.project)
 		if s, ok := statsMap[pr.ID]; ok {
 			pr.IssueCount = s.TotalCount
 			pr.DoneCount = s.DoneCount

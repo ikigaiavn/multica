@@ -134,6 +134,7 @@ func init() {
 	projectCreateCmd.Flags().String("description", "", "Project description")
 	projectCreateCmd.Flags().String("status", "", "Project status")
 	projectCreateCmd.Flags().String("icon", "", "Project icon (emoji)")
+	projectCreateCmd.Flags().String("avatar-url", "", "Image URL used as the project icon (an uploaded image); takes precedence over --icon")
 	projectCreateCmd.Flags().String("lead", "", "Lead name (member or agent)")
 	projectCreateCmd.Flags().String("start-date", "", "Start date (calendar day, YYYY-MM-DD)")
 	projectCreateCmd.Flags().String("due-date", "", "Due date (calendar day, YYYY-MM-DD)")
@@ -181,6 +182,7 @@ func init() {
 	projectUpdateCmd.Flags().String("description", "", "New description")
 	projectUpdateCmd.Flags().String("status", "", "New status")
 	projectUpdateCmd.Flags().String("icon", "", "New icon (emoji)")
+	projectUpdateCmd.Flags().String("avatar-url", "", "New icon image URL; pass an empty string to remove the image")
 	projectUpdateCmd.Flags().String("lead", "", "New lead name (member or agent)")
 	projectUpdateCmd.Flags().String("start-date", "", "New start date (calendar day, YYYY-MM-DD; pass empty string to clear)")
 	projectUpdateCmd.Flags().String("due-date", "", "New due date (calendar day, YYYY-MM-DD; pass empty string to clear)")
@@ -330,6 +332,9 @@ func runProjectCreate(cmd *cobra.Command, _ []string) error {
 	if v, _ := cmd.Flags().GetString("icon"); v != "" {
 		body["icon"] = v
 	}
+	if v, _ := cmd.Flags().GetString("avatar-url"); v != "" {
+		body["avatar_url"] = v
+	}
 	if v, _ := cmd.Flags().GetString("lead"); v != "" {
 		aType, aID, resolveErr := resolveAssignee(ctx, client, v, memberOrAgentKinds)
 		if resolveErr != nil {
@@ -416,6 +421,10 @@ func runProjectUpdate(cmd *cobra.Command, args []string) error {
 		}
 		body["status"] = v
 	}
+	if cmd.Flags().Changed("avatar-url") {
+		v, _ := cmd.Flags().GetString("avatar-url")
+		body["avatar_url"] = v
+	}
 	if cmd.Flags().Changed("icon") {
 		v, _ := cmd.Flags().GetString("icon")
 		body["icon"] = v
@@ -441,7 +450,7 @@ func runProjectUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(body) == 0 {
-		return fmt.Errorf("no fields to update; use flags like --title, --status, --description, --icon, --lead, --start-date, --due-date")
+		return fmt.Errorf("no fields to update; use flags like --title, --status, --description, --icon, --avatar-url, --lead, --start-date, --due-date")
 	}
 
 	var result map[string]any
