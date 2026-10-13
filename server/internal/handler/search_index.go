@@ -381,7 +381,7 @@ func (h *Handler) GetSearchIndexSnapshot(w http.ResponseWriter, r *http.Request)
 	resp := SearchIndexSnapshotResponse{
 		Issues:          h.searchIndexIssues(ctx, wsUUID, issues),
 		Comments:        make([]SearchIndexComment, 0, len(comments)),
-		Projects:        searchIndexProjects(projects),
+		Projects:        h.searchIndexProjects(projects),
 		NextAfterNumber: int32(afterNumber),
 		Done:            len(issues) < limit,
 	}
@@ -507,7 +507,7 @@ func (h *Handler) ListSearchIndexChanges(w http.ResponseWriter, r *http.Request)
 	resp := SearchIndexChangesResponse{
 		Issues:   h.searchIndexIssues(ctx, wsUUID, issues),
 		Comments: []SearchIndexComment{},
-		Projects: searchIndexProjects(projects),
+		Projects: h.searchIndexProjects(projects),
 		Deleted: SearchIndexDeleted{
 			Issues:   []string{},
 			Comments: []string{},
@@ -587,11 +587,11 @@ func (h *Handler) searchIndexIssues(ctx context.Context, wsUUID pgtype.UUID, iss
 	return out
 }
 
-func searchIndexProjects(projects []db.Project) []SearchIndexProject {
+func (h *Handler) searchIndexProjects(projects []db.Project) []SearchIndexProject {
 	out := make([]SearchIndexProject, 0, len(projects))
 	for _, p := range projects {
 		out = append(out, SearchIndexProject{
-			ProjectResponse: projectToResponse(p),
+			ProjectResponse: h.projectToResponse(p),
 			SearchUpdatedAt: p.UpdatedAt.Time.UTC().Format(time.RFC3339Nano),
 		})
 	}

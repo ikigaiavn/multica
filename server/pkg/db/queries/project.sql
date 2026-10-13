@@ -26,9 +26,9 @@ FOR UPDATE;
 -- name: CreateProject :one
 INSERT INTO project (
     workspace_id, title, description, icon, status,
-    lead_type, lead_id, priority, start_date, due_date
+    lead_type, lead_id, priority, start_date, due_date, avatar_url
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 ) RETURNING *;
 
 -- name: UpdateProject :one
@@ -36,6 +36,7 @@ UPDATE project SET
     title = COALESCE(sqlc.narg('title'), title),
     description = sqlc.narg('description'),
     icon = sqlc.narg('icon'),
+    avatar_url = CASE WHEN sqlc.arg('set_avatar_url')::bool THEN sqlc.narg('avatar_url') ELSE avatar_url END,
     status = COALESCE(sqlc.narg('status'), status),
     priority = COALESCE(sqlc.narg('priority'), priority),
     lead_type = sqlc.narg('lead_type'),
