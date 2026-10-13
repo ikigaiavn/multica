@@ -162,6 +162,7 @@ export const ProjectSchema = z.object({
   title: z.string(),
   description: z.string().nullable(),
   icon: z.string().nullable(),
+  avatar_url: z.string().nullable().default(null),
   status: z.string(),
   priority: z.string(),
   lead_type: z.string().nullable(),

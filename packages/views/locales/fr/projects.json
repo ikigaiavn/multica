@@ -182,5 +182,14 @@
     "direction_desc": "Décroissant",
     "section_columns": "Colonnes",
     "view": "Vue"
+  },
+  "icon_picker": {
+    "emoji_tab": "Emoji",
+    "image_tab": "Image",
+    "upload_image": "Envoyer une image",
+    "replace_image": "Remplacer l'image",
+    "remove_image": "Supprimer l'image",
+    "select_image": "Veuillez choisir un fichier image.",
+    "upload_failed": "Échec de l'envoi de l'image"
   }
 }

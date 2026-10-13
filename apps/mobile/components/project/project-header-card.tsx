@@ -29,7 +29,7 @@ export function ProjectHeaderCard({ project, onEdit }: Props) {
       className="px-4 pt-4 pb-3 active:bg-secondary/40"
     >
       <View className="items-start gap-2">
-        <ProjectIcon icon={project.icon} size="lg" />
+        <ProjectIcon icon={project.icon} avatarUrl={project.avatar_url} size="lg" />
         <Text
           className="text-2xl font-bold text-foreground"
           selectable

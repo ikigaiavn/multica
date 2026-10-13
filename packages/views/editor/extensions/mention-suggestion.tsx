@@ -89,6 +89,8 @@ export interface MentionItem {
   statusCategory?: IssueStatusCategory;
   /** Project emoji/icon snapshot for ProjectIcon rendering */
   icon?: string | null;
+  /** Project image icon snapshot; wins over `icon` when set */
+  avatarUrl?: string | null;
   /** Project status snapshot for recent/current project rendering */
   projectStatus?: ProjectStatus;
   /** Present when the target should remain discoverable but cannot be selected. */
@@ -607,7 +609,7 @@ function MentionRow({
         onClick={onSelect}
       >
         <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-          <ProjectIcon project={{ icon: item.icon ?? null }} size="sm" />
+          <ProjectIcon project={{ icon: item.icon ?? null, avatar_url: item.avatarUrl ?? null }} size="sm" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium text-foreground">{item.label}</span>
@@ -691,13 +693,14 @@ function issueToMention(
   };
 }
 
-function projectToMention(p: { id: string; title: string; description?: string | null; icon?: string | null; status?: ProjectStatus }): MentionItem {
+function projectToMention(p: { id: string; title: string; description?: string | null; icon?: string | null; avatar_url?: string | null; status?: ProjectStatus }): MentionItem {
   return {
     id: p.id,
     label: p.title,
     type: "project" as const,
     description: p.description ?? undefined,
     icon: p.icon ?? null,
+    avatarUrl: p.avatar_url ?? null,
     projectStatus: p.status,
   };
 }

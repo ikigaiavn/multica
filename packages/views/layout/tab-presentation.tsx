@@ -166,7 +166,7 @@ function useTabEntityData(subject: TabSubject, wsId: string): TabEntityData {
       }
       break;
     case "project":
-      if (project) data.project = { icon: project.icon, title: project.title };
+      if (project) data.project = { icon: project.icon, avatarUrl: project.avatar_url, title: project.title };
       break;
     case "autopilot":
       if (autopilot) data.autopilot = { title: autopilot.autopilot.title };
@@ -341,7 +341,7 @@ export function ResourceLeadingVisual({
       );
       break;
     case "project-icon":
-      inner = <ProjectIcon project={{ icon: visual.icon }} size="sm" />;
+      inner = <ProjectIcon project={{ icon: visual.icon, avatar_url: visual.avatarUrl }} size="sm" />;
       break;
     case "actor":
       inner = (

@@ -199,7 +199,7 @@ export function AttributeRow({ issue }: { issue: Issue }) {
       {/* Project */}
       {project ? (
         <AttributeChip
-          icon={<ProjectIcon icon={project.icon} size="sm" />}
+          icon={<ProjectIcon icon={project.icon} avatarUrl={project.avatar_url} size="sm" />}
           label={project.title}
           variant="filled"
           onPress={() => openPicker("project")}
